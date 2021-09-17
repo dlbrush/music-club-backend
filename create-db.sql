@@ -37,7 +37,9 @@ CREATE TABLE posts (
   club_id INTEGER NOT NULL,
   text TEXT,
   discogs_release INTEGER NOT NULL,
-  votes INTEGER NOT NULL DEFAULT 0
+  votes INTEGER NOT NULL DEFAULT 0,
+  posted_at TIMESTAMP NOT NULL,
+  rec_tracks TEXT
 );
 
 CREATE TABLE comments (
@@ -45,5 +47,6 @@ CREATE TABLE comments (
   username TEXT REFERENCES users ON DELETE SET NULL,
   text TEXT NOT NULL,
   post_id INTEGER NOT NULL REFERENCES posts ON DELETE CASCADE
+  posted_at TIMESTAMP NOT NULL,
 );
 
