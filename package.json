@@ -1,0 +1,27 @@
+{
+  "name": "music-club-backend",
+  "version": "1.0.0",
+  "description": "An Express backend for the Music Club app",
+  "main": "index.js",
+  "dependencies": {
+    "bcrypt": "^5.0.1",
+    "dotenv": "^10.0.0",
+    "express": "^4.17.1",
+    "jest": "^27.2.5",
+    "pg": "^8.7.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dlbrush/music-club-backend.git"
+  },
+  "author": "Devlin Brush",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/dlbrush/music-club-backend/issues"
+  },
+  "homepage": "https://github.com/dlbrush/music-club-backend#readme"
+}
