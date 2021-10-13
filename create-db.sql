@@ -35,7 +35,7 @@ CREATE TABLE invitations (
 CREATE TABLE posts (
   id SERIAL PRIMARY KEY,
   club_id INTEGER NOT NULL,
-  text TEXT,
+  content TEXT,
   discogs_release INTEGER NOT NULL,
   votes INTEGER NOT NULL DEFAULT 0,
   posted_at TIMESTAMP NOT NULL,
@@ -45,7 +45,7 @@ CREATE TABLE posts (
 CREATE TABLE comments (
   id SERIAL PRIMARY KEY,
   username TEXT REFERENCES users ON DELETE SET NULL,
-  text TEXT NOT NULL,
+  comment TEXT NOT NULL,
   post_id INTEGER NOT NULL REFERENCES posts ON DELETE CASCADE
   posted_at TIMESTAMP NOT NULL,
 );
