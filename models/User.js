@@ -4,11 +4,21 @@ const db = require('../db');
 const { BCRYPT_WORK_FACTOR } = require('../config');
 
 class User {
-  constructor(username, email, admin, profileImgUrl) {
+  constructor(username, email, profileImgUrl, admin) {
     this.username = username;
     this.email = email;
-    this.admin = admin;
     this.profileImgUrl = profileImgUrl;
+    if (admin) this.admin = admin;
+  }
+
+  static async getAll() {
+    const result = await db.query(`
+      SELECT username, email, profile_img_url
+      FROM users
+    `);
+    return result.rows.map(row => {
+      return new User(row.username, row.email, row.profile_img_url)
+    });
   }
 
   static async create(username, password, email, profileImgUrl, admin=false) {
@@ -16,10 +26,11 @@ class User {
     const result = await db.query(`
       INSERT INTO users (username, password, email, profile_img_url, admin)
       VALUES ($1, $2, $3, $4, $5)
+      RETURNING username, email, profile_img_url, admin
     `, [username, hashedPassword, email, profileImgUrl, admin]);
     const userRow = result.rows[0];
     return new User(userRow.username, userRow.email, userRow.admin, userRow.profile_img_url);
   }
 }
 
-export default User;
+module.exports = User;

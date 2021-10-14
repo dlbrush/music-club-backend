@@ -1,18 +1,13 @@
 require('dotenv').config();
 
+// Server config
 const PORT = 3000;
+
+// Authentication
+const SECRET_KEY = process.env.SECRET_KEY;
 
 // Speed up bcrypt work factor for testing
 const BCRYPT_WORK_FACTOR = process.env.NODE_ENV === 'test' ? 1 : 12;
-
-const DB_URI = 'postgresql://'
-
-// Can't figure out why jobly doesn't need a full URI = going to try without
-// function getDatabaseUri() {
-//   return (process.env.NODE_ENV === "test")
-//       ? `${DB_URI}music_club_test`
-//       : process.env.DATABASE_URL || `${DB_URI}music_club`;
-// }
 
 function getDatabaseUri() {
   return (process.env.NODE_ENV === "test")
@@ -22,5 +17,7 @@ function getDatabaseUri() {
 
 module.exports = {
   PORT,
+  SECRET_KEY,
+  BCRYPT_WORK_FACTOR,
   getDatabaseUri
 };
