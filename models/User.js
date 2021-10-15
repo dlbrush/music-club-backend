@@ -1,35 +1,144 @@
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 
 const db = require('../db');
 const { BCRYPT_WORK_FACTOR } = require('../config');
+const { CLUB_FILTER_STRING } = require('../helpers/sql');
+const { generateUserToken } = require('../helpers/auth');
 
 class User {
   constructor(username, email, profileImgUrl, admin) {
     this.username = username;
     this.email = email;
     this.profileImgUrl = profileImgUrl;
-    if (admin) this.admin = admin;
+    if (admin !== undefined) this.admin = admin;
   }
 
-  static async getAll() {
+  // Static methods
+
+  /**
+   * Get all users from the DB.
+   * Optionally, pass a club ID to only get users in the club with the passed ID.
+   * @param {number} clubFilterId 
+   * @returns {User[]} (with no admin)
+   */
+  static async getAll(clubFilterId) {
+    // Include club filter string and parameter only if an ID has been passed
+    const clubFilterString = clubFilterId ? CLUB_FILTER_STRING : '';
+    const parameters = [];
+    if (clubFilterId) parameters.push(clubFilterId);
+
     const result = await db.query(`
-      SELECT username, email, profile_img_url
-      FROM users
-    `);
+      SELECT u.username, u.email, u.profile_img_url
+      FROM users u
+      ${clubFilterString}
+    `, parameters);
     return result.rows.map(row => {
       return new User(row.username, row.email, row.profile_img_url)
     });
   }
 
-  static async create(username, password, email, profileImgUrl, admin=false) {
-    const hashedPassword = await bcrypt.hash(password, BCRYPT_WORK_FACTOR);
+  /**
+   * Get details on a specific user with username or email
+   * Username should be primary search method, but email can be checked for user registration
+   * Returns undefined if user not found
+   * @param {string} username 
+   * @returns {User} (with admin)
+   */
+  static async get(username, email) {
     const result = await db.query(`
-      INSERT INTO users (username, password, email, profile_img_url, admin)
-      VALUES ($1, $2, $3, $4, $5)
-      RETURNING username, email, profile_img_url, admin
-    `, [username, hashedPassword, email, profileImgUrl, admin]);
+      SELECT username, email, profile_img_url, admin
+      FROM users
+      WHERE username = $1 OR email = $2
+    `, [username, email]);
+    const user = result.rows[0];
+    if (user) {
+      return new User(user.username, user.email, user.profile_img_url, user.admin);
+    } 
+  }
+
+  /**
+   * Create a user with a hashed password and insert into the users table.
+   * Returns the created user.
+   * @param {string} username 
+   * @param {string} password 
+   * @param {string} email 
+   * @param {string} profileImgUrl 
+   * @param {boolean} admin 
+   * @returns {User} (with admin)
+   */
+  static async create(username, password, email, profileImgUrl, admin=false) {
+    // First, check that there is no existing user that would violate the unique constraints on username or email
+    this.checkExisting(username, email);
+
+    // Then, hash the password
+    const hashedPassword = await bcrypt.hash(password, BCRYPT_WORK_FACTOR);
+
+    // include profile image in query only if one was passed
+    const profImgColumn = profileImgUrl ? ', profile_img_url' : '';
+    const profImgSerialized = profileImgUrl ? ', $5' : '';
+
+    // Create parameter array, and only include profile image if it was included
+    const parameters = [username, hashedPassword, email, admin];
+    if (profileImgUrl) parameters.push(profileImgUrl);
+
+    // Insert into db
+    const result = await db.query(`
+      INSERT INTO users (username, password, email, admin${profImgColumn})
+      VALUES ($1, $2, $3, $4${profImgSerialized})
+      RETURNING username, email, admin,  profile_img_url
+    `, parameters);
     const userRow = result.rows[0];
-    return new User(userRow.username, userRow.email, userRow.admin, userRow.profile_img_url);
+    return new User(userRow.username, userRow.email, userRow.profile_img_url, userRow.admin);
+  }
+
+  /**
+   * Register a new user. User will not be an admin. First checks if the user is creating a duplicate user by username Returns a JWT containing the user's username and admin status.
+   * @param {*} username 
+   * @param {*} password 
+   * @param {*} email 
+   * @param {*} profileImgUrl 
+   * @returns {string} JWT with user info
+   */
+  static async register(username, password, email, profileImgUrl) {
+    const newUser = await User.create(username, password, email, profileImgUrl);
+    return generateUserToken(newUser.username, newUser.admin);
+  }
+
+  static async checkExisting(username, email) {
+    const existingUser = await User.get(username, email);
+    if (existingUser) {
+      let message;
+      if (existingUser.username === username && existingUser.email === email) {
+        message = `User with username ${username} and email ${email} already exists.`
+      } else if (existingUser.email === email) {
+        message = `User with email ${email} already exists.`
+      } else {
+        message = `User with username ${username} already exists.`
+      }
+      // Throw generic error with message about duplicate user
+      throw new Error(message);
+    }
+  }
+
+  // Instance methods
+
+  async delete() {
+    const result = await db.query(`
+      DELETE FROM users
+      WHERE username = $1
+      RETURNING username
+    `, [this.username]);
+    return `Deleted user ${this.username}.`;
+  }
+
+  async save() {
+    const result = await db.query(`
+      UPDATE users
+      SET email=$1, profile_img_url=$2
+      WHERE username = $3
+    `, [this.email, this.profileImgUrl, this.username]);
+    return `Updated user ${this.username}.`;
   }
 }
 

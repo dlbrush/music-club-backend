@@ -1,0 +1,18 @@
+{
+  "type": "object",
+  "required": [],
+  "properties": {
+      "email": {
+          "type": "string",
+          "title": "The email schema",
+          "description": "The user's email address.",
+          "format": "email"
+      },
+      "profileImgUrl": {
+          "type": "string",
+          "description": "URL to access the user's profile image at. Should be jpg, png, or gif, and accessible via http.",
+          "pattern": "^https*://.+(.jpg|.jpeg|.png|.gif)"
+      }
+  },
+  "additionalProperties": false
+}
