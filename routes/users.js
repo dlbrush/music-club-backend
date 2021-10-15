@@ -34,6 +34,10 @@ router.post('/register', async function (req, res, next) {
       const errs = validator.errors.map(e => e.stack);
       throw new Error(errs);
     }
+
+    // Check that there is no existing user that would violate the unique constraints on username or email
+    User.checkExisting(username, email);
+
     const { username, password, email, profileImgUrl} = req.body;
     // Register user and receive JWT with username and admin status
     const token = await User.register(username, password, email, profileImgUrl);
@@ -52,6 +56,10 @@ router.post('/create', async function (req, res, next) {
       const errs = validator.errors.map(e => e.stack);
       throw new Error(errs);
     }
+
+    // Check that there is no existing user that would violate the unique constraints on username or email
+    User.checkExisting(username, email);
+    
     const { username, password, email, profileImgUrl, admin=false} = req.body;
     const newUser = await User.create(username, password, email, profileImgUrl, admin);
     return res.status(201).json({ newUser });

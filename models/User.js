@@ -1,5 +1,4 @@
 const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
 
 const db = require('../db');
 const { BCRYPT_WORK_FACTOR } = require('../config');
@@ -68,9 +67,6 @@ class User {
    * @returns {User} (with admin)
    */
   static async create(username, password, email, profileImgUrl, admin=false) {
-    // First, check that there is no existing user that would violate the unique constraints on username or email
-    this.checkExisting(username, email);
-
     // Then, hash the password
     const hashedPassword = await bcrypt.hash(password, BCRYPT_WORK_FACTOR);
 
