@@ -7,6 +7,7 @@ const Club = require('../models/Club');
 const newClubSchema = require('../schemas/newClub.json');
 const clubSearchSchema = require('../schemas/clubSearch.json');
 const updateClubSchema = require('../schemas/updateClub.json');
+const MembershipService = require('../services/MembershipService');
 
 const router = new express.Router();
 
@@ -33,7 +34,10 @@ router.get('/', async function(req, res, next) {
 
 router.get('/:clubId', async function(req, res, next) {
   try {
-    const clubId = req.params.clubId;
+    const clubId = parseInt(req.params.clubId);
+    if (!Number.isInteger(clubId)) {
+      throw new BadRequestError('Club ID must be an integer.')
+    }
     const club = await Club.get(clubId);
     if (!club) {
       throw new NotFoundError(`Club with ID ${clubId} not found.`);
@@ -57,6 +61,7 @@ router.post('/', async function(req, res, next) {
     }
 
     const newClub = await Club.create(name, description, founderUser, isPublic, bannerImgUrl);
+    const joined = await MembershipService.addFounder(founderUser, newClub);
 
     return res.status(201).json({ newClub });
   } catch(e) {
@@ -66,10 +71,15 @@ router.post('/', async function(req, res, next) {
 
 router.patch('/:clubId', async function (req, res, next) {
   try {
-    const club = await Club.get(req.params.clubId);
+    const clubId = parseInt(req.params.clubId);
+    if (!clubId) {
+      throw new BadRequestError('Club ID must be an integer.')
+    }
+
+    const club = await Club.get(clubId);
 
     if (!club) {
-      throw new NotFoundError(`Club with ID ${req.params.clubId} not found.`);
+      throw new NotFoundError(`Club with ID ${clubId} not found.`);
     }
 
     // Validate request body
@@ -91,10 +101,15 @@ router.patch('/:clubId', async function (req, res, next) {
 
 router.delete('/:clubId', async function (req, res, next) {
   try {
-    const club = await Club.get(req.params.clubId);
+    const clubId = parseInt(req.params.clubId);
+    if (!clubId) {
+      throw new BadRequestError('Club ID must be an integer.')
+    }
+
+    const club = await Club.get(clubId);
 
     if (!club) {
-      throw new NotFoundError(`Club with ID ${req.params.clubId} not found.`);
+      throw new NotFoundError(`Club with ID ${clubId} not found.`);
     }
 
     const message = await club.delete();

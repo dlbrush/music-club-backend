@@ -1,5 +1,6 @@
 const db = require('../db');
 const { handleClubFilters } = require('../helpers/sql');
+const User = require('./User');
 
 class Club {
   /**
@@ -11,9 +12,10 @@ class Club {
    * @param {string} founder Username for User table
    * @param {boolean} isPublic
    * @param {string} bannerImgUrl
+   * @param {User[]} members
    * @returns {Club}
    */
-  constructor(id, name, description, founder, isPublic, founded, bannerImgUrl) {
+  constructor(id, name, description, founder, isPublic, founded, bannerImgUrl, members) {
     this.id = id;
     this.name = name;
     this.description = description;
@@ -22,6 +24,7 @@ class Club {
     // Properties that may not always be passed
     if (founded) this.founded = founded;
     if (bannerImgUrl) this.bannerImgUrl = bannerImgUrl;
+    if (members) this.members = members;
   }
 
   // Static methods
@@ -53,16 +56,33 @@ class Club {
    * Return all details of a specific club
    * @param {number} clubId 
    */
-  // Todo - return all users associated with club
   static async get(clubId) {
     const result = await db.query(`
-      SELECT id, name, description, founder, is_public AS "isPublic", founded, banner_img_url AS "bannerImgUrl"
-      FROM clubs
-      WHERE id = $1
+      SELECT c.id, 
+             c.name, 
+             c.description, 
+             c.founder, 
+             c.is_public AS "isPublic", 
+             c.founded, 
+             c.banner_img_url AS "bannerImgUrl",
+             u.username,
+             u.email,
+             u.profile_img_url AS "profileImgUrl"
+      FROM clubs c
+      LEFT JOIN users_clubs uc ON uc.club_id=c.id
+      LEFT JOIN users u ON u.username=uc.username
+      WHERE c.id = $1
     `, [clubId]);
-    const club = result.rows[0];
-    if (club) {
-      return new Club(club.id, club.name, club.description, club.founder, club.isPublic, new Date(club.founded), club.bannerImgUrl);
+    const clubInfo = result.rows[0];
+    if (clubInfo) {
+      // Map all user info in rows to members array
+      const members = [];
+      result.rows.forEach(row => {
+        if (row.username !== null) {
+          members.push(new User(row.username, row.email, row.profileImgUrl));
+        }
+      });
+      return new Club(clubInfo.id, clubInfo.name, clubInfo.description, clubInfo.founder, clubInfo.isPublic, new Date(clubInfo.founded), clubInfo.bannerImgUrl, members);
     }
     // Returns undefined if no club found
   }
@@ -85,7 +105,7 @@ class Club {
     `, parameters);
 
     const newClub = result.rows[0];
-    return new Club(newClub.id, newClub.name, newClub.description, founder, newClub.is_public, now, newClub.bannerImgUrl);
+    return new Club(newClub.id, newClub.name, newClub.description, newClub.founder, newClub.is_public, now, newClub.bannerImgUrl);
   }
 
   // Instance methods
