@@ -41,6 +41,7 @@ class Club {
       SELECT id, name, description, founder, is_public
       FROM clubs
       ${filters.string}
+      ORDER BY id ASC
     `, filters.parameters);
 
     return result.rows.map(club => {

@@ -87,6 +87,22 @@ router.patch('/:clubId', async function (req, res, next) {
   } catch(e) {
     next(e);
   }
-})
+});
+
+router.delete('/:clubId', async function (req, res, next) {
+  try {
+    const club = await Club.get(req.params.clubId);
+
+    if (!club) {
+      throw new NotFoundError(`Club with ID ${req.params.clubId} not found.`);
+    }
+
+    const message = await club.delete();
+
+    return res.json({ message });
+  } catch(e) {
+    next(e);
+  }
+});
 
 module.exports = router;
