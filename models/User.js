@@ -2,7 +2,7 @@ const bcrypt = require('bcrypt');
 
 const db = require('../db');
 const { BCRYPT_WORK_FACTOR } = require('../config');
-const { CLUB_FILTER_STRING } = require('../helpers/sql');
+const { handleUserFilters } = require('../helpers/sql');
 const { generateUserToken } = require('../helpers/auth');
 
 class User {
@@ -18,20 +18,19 @@ class User {
   /**
    * Get all users from the DB.
    * Optionally, pass a club ID to only get users in the club with the passed ID.
-   * @param {number} clubFilterId 
+   * @param {number} clubId 
    * @returns {User[]} (with no admin)
    */
-  static async getAll(clubFilterId) {
+  static async getAll(clubId, username) {
     // Include club filter string and parameter only if an ID has been passed
-    const clubFilterString = clubFilterId ? CLUB_FILTER_STRING : '';
-    const parameters = [];
-    if (clubFilterId) parameters.push(clubFilterId);
+    const filters = handleUserFilters(clubId, username);
 
     const result = await db.query(`
       SELECT u.username, u.email, u.profile_img_url
       FROM users u
-      ${clubFilterString}
-    `, parameters);
+      LEFT JOIN users_clubs uc ON uc.username = u.username
+      ${filters.string}
+    `, filters.parameters);
     return result.rows.map(row => {
       return new User(row.username, row.email, row.profile_img_url)
     });
@@ -125,7 +124,11 @@ class User {
       WHERE username = $1
       RETURNING username
     `, [this.username]);
-    return `Deleted user ${this.username}.`;
+    if (result.rows) {
+      return `Deleted user ${this.username}.`;
+    } else {
+      throw new Error(`Unable to delete user ${this.username}`);
+    }
   }
 
   async save() {

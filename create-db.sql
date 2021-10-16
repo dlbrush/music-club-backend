@@ -16,6 +16,7 @@ CREATE TABLE clubs (
   description TEXT NOT NULL,
   founded DATE NOT NULL,
   founder TEXT REFERENCES users ON DELETE SET NULL,
+  is_public BOOLEAN NOT NULL,
   banner_img_url TEXT NOT NULL DEFAULT 'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80'
 );
 

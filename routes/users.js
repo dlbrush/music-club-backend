@@ -1,16 +1,25 @@
 const express = require('express');
-const jsonschema = require('jsonschema');
 
 const { BadRequestError, NotFoundError } = require('../helpers/errors');
 const User = require('../models/User');
+const { validateRequest } = require('../helpers/validation');
 const newUserSchema = require('../schemas/newUser.json');
 const updateUserSchema = require('../schemas/updateUser.json');
+const userSearchSchema = require('../schemas/userSearch.json');
 
 const router = new express.Router();
 
 router.get('/', async function (req, res, next) {
   try {
-    const users = await User.getAll();
+    // Convert club ID query to number if defined
+    if (req.query['clubId'] !== undefined) {
+      req.query.clubId = parseInt(req.query.clubId);
+    }
+
+    // Validate possible query strings
+    validateRequest(req.query, userSearchSchema);
+
+    const users = await User.getAll(req.query['clubId'], req.query['username']);
     return res.json({ users });
   } catch (e) {
     return next(e);
@@ -18,79 +27,78 @@ router.get('/', async function (req, res, next) {
 });
 
 router.get('/:username', async function (req, res, next) {
-  const user = await User.get(req.params.username);
-  if (user) {
+  try {
+    const user = await User.get(req.params.username);
+    if (!user) {
+      throw new NotFoundError(`User ${req.params.username} not found.`);
+    }
     return res.json({ user });
-  } else {
-    const notFound = new NotFoundError(`User ${req.params.username} not found.`);
-    next(notFound);
+  } catch (e) {
+    return next(e)
   }
 })
 
 router.post('/register', async function (req, res, next) {
   try {
-    const validator = jsonschema.validate(req.body, newUserSchema);
-    if (!validator.valid) {
-      const errs = validator.errors.map(e => e.stack);
-      throw new Error(errs);
-    }
-
-    // Check that there is no existing user that would violate the unique constraints on username or email
-    User.checkExisting(username, email);
+    validateRequest(req.body, newUserSchema);
 
     const { username, password, email, profileImgUrl} = req.body;
+
+    // Check that there is no existing user that would violate the unique constraints on username or email
+    try {
+      await User.checkExisting(username, email);
+    } catch (e) {
+      throw new BadRequestError(e.message);
+    }
+
     // Register user and receive JWT with username and admin status
     const token = await User.register(username, password, email, profileImgUrl);
+
     return res.status(201).json({ token });
   } catch (e) {
-    // Make passed error into a Bad Request Error
-    const badRequestError = new BadRequestError(e.message);
-    return next(badRequestError);
+    return next(e);
   }
 });
 
-router.post('/create', async function (req, res, next) {
+router.post('/', async function (req, res, next) {
   try {
-    const validator = jsonschema.validate(req.body, newUserSchema);
-    if (!validator.valid) {
-      const errs = validator.errors.map(e => e.stack);
-      throw new Error(errs);
-    }
+    validateRequest(req.body, newUserSchema);
+
+    const { username, password, email, profileImgUrl, admin=false} = req.body;
 
     // Check that there is no existing user that would violate the unique constraints on username or email
-    User.checkExisting(username, email);
-    
-    const { username, password, email, profileImgUrl, admin=false} = req.body;
+    try {
+      await User.checkExisting(username, email);
+    } catch (e) {
+      throw new BadRequestError(e.message);
+    }
+
     const newUser = await User.create(username, password, email, profileImgUrl, admin);
     return res.status(201).json({ newUser });
   } catch (e) {
-    // Make passed error into a Bad Request Error
-    const badRequestError = new BadRequestError(e.message);
-    return next(badRequestError);
+    return next(e);
   }
 });
 
 router.patch('/:username', async function (req, res, next) {
   try {
     const user = await User.get(req.params.username);
+
     if (!user) {
       throw new NotFoundError(`User ${req.params.username} not found.`);
     }
-    const validator = jsonschema.validate(req.body, updateUserSchema);
-    if (!validator.valid) {
-      const errs = validator.errors.map(e => e.stack);
-      throw new Error(errs);
-    }
+
+    // Validate passed properties
+    validateRequest(req.body, updateUserSchema);
+
+    // Update properties of user if they were passed in the body
     user.email = req.body.email || user.email;
     user.profileImgUrl = req.body.profileImgUrl || user.profileImgUrl;
+
     const message = await user.save();
     return res.json({message, user});
   } catch (e) {
-    // If error is NotFoundError, pass as is
-    if (e instanceof NotFoundError) return next(e);
-    // If error not 404, make error into a Bad Request Error
-    const badRequestError = new BadRequestError(e.message);
-    return next(badRequestError);
+    return next(e);
   }
 });
 

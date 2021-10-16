@@ -1,0 +1,33 @@
+{
+  "type": "object",
+  "required": [
+      "name",
+      "description",
+      "founder",
+      "isPublic"
+  ],
+  "properties": {
+      "name": {
+          "type": "string",
+          "description": "Name of the club"
+      },
+      "description": {
+          "type": "string",
+          "description": "Description of the club"
+      },
+      "founder": {
+          "type": "string",
+          "description": "Username of the founder of the club"
+      },
+      "bannerImgUrl": {
+          "type": "string",
+          "description": "URL to access the club's banner image at. Should be jpg, png, or gif, and accessible via http.",
+          "pattern": "^https*://.+(.jpg|.jpeg|.png|.gif)"
+      },
+      "isPublic": {
+          "type": "boolean",
+          "description": "Whether or not the club is open to the public."
+      }
+  },
+  "additionalProperties": false
+}

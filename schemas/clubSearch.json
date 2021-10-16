@@ -1,0 +1,15 @@
+{
+  "type": "object",
+  "required": [],
+  "properties": {
+      "name": {
+          "type": "string",
+          "description": "The name of a club"
+      },
+      "isPublic": {
+          "type": "boolean",
+          "description": "Set to true if you want to only return public clubs."
+      }
+  },
+  "additionalProperties": false
+}

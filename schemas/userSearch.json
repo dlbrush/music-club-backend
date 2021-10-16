@@ -1,0 +1,15 @@
+{
+  "type": "object",
+  "required": [],
+  "properties": {
+      "username": {
+          "type": "string",
+          "description": "The name of a user"
+      },
+      "clubId": {
+          "type": "number",
+          "description": "The ID of a club a user could belong to"
+      }
+  },
+  "additionalProperties": false
+}
