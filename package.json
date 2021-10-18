@@ -13,7 +13,7 @@
     "pg": "^8.7.1"
   },
   "scripts": {
-    "test": "jest",
+    "test": "jest -i",
     "createdb": "psql < create-db.sql"
   },
   "repository": {

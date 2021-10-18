@@ -6,6 +6,7 @@ const { validateRequest } = require('../helpers/validation');
 const newUserSchema = require('../schemas/newUser.json');
 const updateUserSchema = require('../schemas/updateUser.json');
 const userSearchSchema = require('../schemas/userSearch.json');
+const MembershipService = require('../services/MembershipService');
 
 const router = new express.Router();
 
@@ -77,6 +78,26 @@ router.post('/', async function (req, res, next) {
     return res.status(201).json({ newUser });
   } catch (e) {
     return next(e);
+  }
+});
+
+/**
+ * POST /:username/join-club/:clubId
+ * Allows the user to attempt to join a club
+ */
+router.post('/:username/join-club/:clubId', async function (req, res, next) {
+  try {
+    // First, make sure passed club ID is an integer
+    const clubId = parseInt(req.params.clubId);
+    if (!Number.isInteger(clubId)) {
+      throw new BadRequestError('Club ID must be an integer.')
+    }
+    const { username } = req.params;
+    // Then, attempt join
+    const message = await MembershipService.join(username, clubId);
+    return res.status(201).json({ message });
+  } catch (e) {
+    next(e);
   }
 });
 

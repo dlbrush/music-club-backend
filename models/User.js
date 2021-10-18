@@ -30,6 +30,7 @@ class User {
       FROM users u
       LEFT JOIN users_clubs uc ON uc.username = u.username
       ${filters.string}
+      ORDER BY u.username ASC
     `, filters.parameters);
     return result.rows.map(row => {
       return new User(row.username, row.email, row.profile_img_url)

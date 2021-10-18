@@ -1,7 +1,7 @@
 const User = require('../models/User');
 const Club = require('../models/Club');
 const UserClub = require('../models/UserClub');
-const { NotFoundError, BadRequestError } = require('../helpers/errors');
+const { NotFoundError, BadRequestError, ExpressError } = require('../helpers/errors');
 
 class MembershipService {
   static async join(username, clubId) {
@@ -23,7 +23,11 @@ class MembershipService {
 
     // If all checks are done, create a new UserClub
     const newUserClub = await UserClub.create(username, clubId);
-    return `User ${username} has successfully joined club ${club.name} (ID: ${clubId})`; 
+    if (newUserClub) {
+      return `User ${username} has successfully joined club ${club.name} (ID: ${clubId})`; 
+    } else {
+      throw new ExpressError(`Request for ${username} to join club ${club.name} (ID: ${clubId}) has failed.`)
+    }
   }
 
   static async checkMembership(username, clubId) {

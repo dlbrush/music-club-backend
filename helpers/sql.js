@@ -12,7 +12,6 @@ function handleUserFilters(clubId, username) {
     string += `${addWhereOrAnd(string)} u.username ILIKE $${paramCount}`;
     parameters.push(`%${username}%`);
   }
-  console.log(string);
   return {parameters, string}
 }
 

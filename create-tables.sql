@@ -1,7 +1,3 @@
-DROP DATABASE music_club;
-CREATE DATABASE music_club;
-\connect music_club
-
 CREATE TABLE users (
   username TEXT PRIMARY KEY,
   password TEXT NOT NULL,
@@ -50,4 +46,3 @@ CREATE TABLE comments (
   post_id INTEGER NOT NULL REFERENCES posts ON DELETE CASCADE,
   posted_at TIMESTAMP NOT NULL
 );
-
