@@ -38,7 +38,7 @@ describe('User model', () => {
     });
 
     it('Returns only users matching passed username', async () => {
-      const users = await User.getAll(undefined, 'test2');
+      const users = await User.getAll('test2');
       expect(users.length).toEqual(1);
       expect(users[0]).toEqual({
         username: user2.username,
@@ -47,18 +47,8 @@ describe('User model', () => {
       });
     });
 
-    it('Returns only users in the club with passed ID', async () => {
-      const users = await User.getAll(club1.id);
-      expect(users.length).toEqual(1);
-      expect(users[0]).toEqual({
-        username: user1.username,
-        email: user1.email,
-        profileImgUrl: user1.profileImgUrl
-      });
-    });
-
     it('Returns empty array if no matches to filters', async () => {
-      const users = await User.getAll(club1.id, 'abc');
+      const users = await User.getAll('abc');
       expect(users).toEqual([]);
     });
   });
@@ -88,6 +78,18 @@ describe('User model', () => {
       const user = await User.get('abc', 'test99@test.com');
       expect(user).toEqual(undefined);
     })
+  });
+
+  describe('#create', () => {
+    it('Creates user with all passed attributes', async () => {
+      const user = await User.create('test3', 'test3', 'test3@test.com', 'http://test.com/3.jpg', true);
+      expect(user).toEqual({
+        username: 'test3',
+        email: 'test3@test.com',
+        profileImgUrl: 'http://test.com/3.jpg',
+        admin: true
+      });
+    });
   });
 
   afterAll(async () => {

@@ -2,7 +2,7 @@ const bcrypt = require('bcrypt');
 
 const db = require('../db');
 const { BCRYPT_WORK_FACTOR } = require('../config');
-const { handleUserFilters } = require('../helpers/sql');
+const { handleUserFilters, createParamList } = require('../helpers/sql');
 const { generateUserToken } = require('../helpers/auth');
 
 class User {
@@ -21,17 +21,31 @@ class User {
    * @param {number} clubId 
    * @returns {User[]} (with no admin)
    */
-  static async getAll(clubId, username) {
+  static async getAll(username) {
     // Include club filter string and parameter only if an ID has been passed
-    const filters = handleUserFilters(clubId, username);
+    const filters = handleUserFilters(username);
 
     const result = await db.query(`
-      SELECT u.username, u.email, u.profile_img_url
-      FROM users u
-      LEFT JOIN users_clubs uc ON uc.username = u.username
+      SELECT username, email, profile_img_url
+      FROM users
       ${filters.string}
-      ORDER BY u.username ASC
+      ORDER BY username ASC
     `, filters.parameters);
+    return result.rows.map(row => {
+      return new User(row.username, row.email, row.profile_img_url)
+    });
+  }
+
+  static async getSome(usernames) {
+    // Include club filter string and parameter only if an ID has been passed
+    const paramList = createParamList(usernames);
+
+    const result = await db.query(`
+      SELECT username, email, profile_img_url
+      FROM users
+      ${paramList}
+      ORDER BY username ASC
+    `, usernames);
     return result.rows.map(row => {
       return new User(row.username, row.email, row.profile_img_url)
     });
@@ -67,10 +81,10 @@ class User {
    * @returns {User} (with admin)
    */
   static async create(username, password, email, profileImgUrl, admin=false) {
-    // Then, hash the password
+    // Hash the password
     const hashedPassword = await bcrypt.hash(password, BCRYPT_WORK_FACTOR);
 
-    // include profile image in query only if one was passed
+    // Include profile image in query only if one was passed
     const profImgColumn = profileImgUrl ? ', profile_img_url' : '';
     const profImgSerialized = profileImgUrl ? ', $5' : '';
 

@@ -1,5 +1,6 @@
 const db = require('../db');
 const { handleClubFilters } = require('../helpers/sql');
+const MembershipService = require('../services/MembershipService');
 const User = require('./User');
 
 class Club {
@@ -58,30 +59,20 @@ class Club {
    */
   static async get(clubId) {
     const result = await db.query(`
-      SELECT c.id, 
-             c.name, 
-             c.description, 
-             c.founder, 
-             c.is_public AS "isPublic", 
-             c.founded, 
-             c.banner_img_url AS "bannerImgUrl",
-             u.username,
-             u.email,
-             u.profile_img_url AS "profileImgUrl"
-      FROM clubs c
-      LEFT JOIN users_clubs uc ON uc.club_id=c.id
-      LEFT JOIN users u ON u.username=uc.username
-      WHERE c.id = $1
+      SELECT id, 
+             name, 
+             description, 
+             founder, 
+             is_public AS "isPublic", 
+             founded, 
+             banner_img_url AS "bannerImgUrl"
+      FROM clubs
+      WHERE id = $1
     `, [clubId]);
     const clubInfo = result.rows[0];
     if (clubInfo) {
-      // Map all user info in rows to members array
-      const members = [];
-      result.rows.forEach(row => {
-        if (row.username !== null) {
-          members.push(new User(row.username, row.email, row.profileImgUrl));
-        }
-      });
+      // Get club members if there are any
+      const members = await MembershipService.getClubMembers(clubId);
       return new Club(clubInfo.id, clubInfo.name, clubInfo.description, clubInfo.founder, clubInfo.isPublic, new Date(clubInfo.founded), clubInfo.bannerImgUrl, members);
     }
     // Returns undefined if no club found

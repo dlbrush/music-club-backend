@@ -3,6 +3,7 @@ const Club = require('../models/Club');
 const UserClub = require('../models/UserClub');
 const { NotFoundError, BadRequestError, ExpressError } = require('../helpers/errors');
 
+// Class containing methods regarding users and their membership in clubs
 class MembershipService {
   static async join(username, clubId) {
     // Check that both the user and the club exist
@@ -45,6 +46,16 @@ class MembershipService {
     // Set club.members to an array including the founder
     club.members = [founder];
     return `Founder ${founder.username} has successfully joined club ${club.name} (ID: ${club.clubId})`;
+  }
+
+  static async getClubMembers(clubId) {
+    let members = [];
+    const memberships = await UserClub.getAll(undefined, clubId);
+    if (memberships) {
+      const memberNames = memberships.map(membership => membership.username);
+      members = await User.getSome(memberNames);
+    }
+    return members;
   }
 }
 

@@ -1,15 +1,10 @@
-function handleUserFilters(clubId, username) {
+function handleUserFilters(username) {
   let parameters = [];
   let string = '';
   let paramCount = 0;
-  if (clubId) {
-    paramCount++;
-    string = `WHERE uc.club_id = $${paramCount}`;
-    parameters.push(clubId);
-  }
   if (username) {
     paramCount++;
-    string += `${addWhereOrAnd(string)} u.username ILIKE $${paramCount}`;
+    string += `${addWhereOrAnd(string)} username ILIKE $${paramCount}`;
     parameters.push(`%${username}%`);
   }
   return {parameters, string}
@@ -25,14 +20,46 @@ function handleClubFilters(isPublic, name) {
     string += `${addWhereOrAnd(string)} name ILIKE $1`;
     parameters.push(`%${name}%`);
   }
-  return {parameters, string}
+  return { parameters, string }
+}
+
+function handleUserClubFilters(username, clubId) {
+  let parameters = [];
+  let string = '';
+  let paramCount = 0;
+  if (username) {
+    paramCount++;
+    string = `WHERE username=$${paramCount}`;
+    parameters.push(username);
+  }
+  if (clubId) {
+    paramCount++;
+    string += `${addWhereOrAnd(string)} club_id=$${paramCount}`;
+    parameters.push(clubId);
+  }
+  return { parameters, string }
+}
+
+function createParamList(values, column) {
+  let string = '';
+  for (let i = 1; i <= values.length; i++) {
+    string += `${addWhereOrOr} ${column}=$${i}`;
+  }
+  return string;
 }
 
 function addWhereOrAnd(string) {
   return string.length ? ' AND' : 'WHERE'
 }
 
+function addWhereOrOr(string) {
+  return string.length ? ' OR' : 'WHERE'
+}
+
+
 module.exports = {
   handleUserFilters,
-  handleClubFilters
+  handleClubFilters,
+  handleUserClubFilters,
+  createParamList
 }
