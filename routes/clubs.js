@@ -13,7 +13,7 @@ const router = new express.Router();
 
 router.get('/', async function(req, res, next) {
   try {
-    // Convert isPublic query string to boolean if it is set to true
+    // Convert isPublic query string to boolean if it matches boolean string
     if (req.query.isPublic !== undefined) {
       if (req.query.isPublic.toLowerCase() === 'true') {
         req.query.isPublic = true;

@@ -38,7 +38,7 @@ class User {
 
   static async getSome(usernames) {
     // Include club filter string and parameter only if an ID has been passed
-    const paramList = createParamList(usernames);
+    const paramList = createParamList(usernames, 'username');
 
     const result = await db.query(`
       SELECT username, email, profile_img_url
@@ -103,7 +103,7 @@ class User {
   }
 
   /**
-   * Register a new user. User will not be an admin. First checks if the user is creating a duplicate user by username Returns a JWT containing the user's username and admin status.
+   * Register a new user. User will not be an admin. Returns a JWT containing the user's username and admin status.
    * @param {*} username 
    * @param {*} password 
    * @param {*} email 
@@ -117,6 +117,7 @@ class User {
 
   static async checkExisting(username, email) {
     const existingUser = await User.get(username, email);
+    
     if (existingUser) {
       let message;
       if (existingUser.username === username && existingUser.email === email) {
@@ -152,7 +153,11 @@ class User {
       SET email=$1, profile_img_url=$2
       WHERE username = $3
     `, [this.email, this.profileImgUrl, this.username]);
-    return `Updated user ${this.username}.`;
+    if (result.rows) {
+      return `Updated user ${this.username}.`;
+    } else {
+      throw new Error(`Unable to update user ${user.username}`);
+    }
   }
 }
 

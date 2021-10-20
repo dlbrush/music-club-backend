@@ -12,15 +12,7 @@ const router = new express.Router();
 
 router.get('/', async function (req, res, next) {
   try {
-    // Convert club ID query to number if defined
-    if (req.query['clubId'] !== undefined) {
-      req.query.clubId = parseInt(req.query.clubId);
-    }
-
-    // Validate possible query strings
-    validateRequest(req.query, userSearchSchema);
-
-    const users = await User.getAll(req.query['clubId'], req.query['username']);
+    const users = await User.getAll(req.query['username']);
     return res.json({ users });
   } catch (e) {
     return next(e);
@@ -43,7 +35,7 @@ router.post('/register', async function (req, res, next) {
   try {
     validateRequest(req.body, newUserSchema);
 
-    const { username, password, email, profileImgUrl} = req.body;
+    const { username, password, email, profileImgUrl } = req.body;
 
     // Check that there is no existing user that would violate the unique constraints on username or email
     try {
@@ -63,6 +55,7 @@ router.post('/register', async function (req, res, next) {
 
 router.post('/', async function (req, res, next) {
   try {
+    // Validate request
     validateRequest(req.body, newUserSchema);
 
     const { username, password, email, profileImgUrl, admin=false} = req.body;

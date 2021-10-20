@@ -43,7 +43,7 @@ function handleUserClubFilters(username, clubId) {
 function createParamList(values, column) {
   let string = '';
   for (let i = 1; i <= values.length; i++) {
-    string += `${addWhereOrOr} ${column}=$${i}`;
+    string += `${addWhereOrOr(string)} ${column}=$${i}`;
   }
   return string;
 }

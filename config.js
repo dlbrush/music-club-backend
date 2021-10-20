@@ -4,7 +4,7 @@ require('dotenv').config();
 const PORT = 3000;
 
 // Authentication
-const SECRET_KEY = process.env.SECRET_KEY;
+const SECRET_KEY = process.env.SECRET_KEY || 'not_a_secret';
 
 // Speed up bcrypt work factor for testing
 const BCRYPT_WORK_FACTOR = process.env.NODE_ENV === 'test' ? 1 : 12;

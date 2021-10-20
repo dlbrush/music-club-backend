@@ -1,6 +1,7 @@
-const db = require('../../db');
-const User = require('../../models/User');
-const Club = require('../../models/Club');
+const db = require('../db');
+const User = require('../models/User');
+const Club = require('../models/Club');
+const UserClub = require('../models/UserClub');
 
 async function seedDb() {
   const result = await db.query(`
@@ -37,11 +38,31 @@ async function seedDb() {
   }
 }
 
+async function createTestObjects() {
+  const user1 = await User.create('test1', 'test1', 'test1@test.com', 'http://test.com/1.jpg', true)
+  const user2 = await User.create('test2', 'test2', 'test2@test.com', 'http://test.com/2.jpg', false);
+  const club1 = await Club.create('testClub1', 'testing club 1', 'test1', true, 'http://test.com/1.jpg');
+  const club2 = await Club.create('testClub2', 'testing club 2', 'test2', false, 'http://test.com/2.jpg');
+  const userClub1 = await UserClub.create('test1', club1.id);
+  const userClub2 = await UserClub.create('test2', club2.id);
+  return {
+    user1,
+    user2,
+    club1,
+    club2,
+    userClub1,
+    userClub2
+  }
+}
+
 async function clearDb() {
   await db.query('DELETE FROM users');
+  await db.query('DELETE FROM clubs');
+  await db.query('DELETE FROM users_clubs');
 }
 
 module.exports = {
   seedDb,
+  createTestObjects,
   clearDb
 }
