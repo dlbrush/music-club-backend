@@ -4,7 +4,6 @@
   "properties": {
       "email": {
           "type": "string",
-          "title": "The email schema",
           "description": "The user's email address.",
           "format": "email"
       },
