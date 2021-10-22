@@ -57,7 +57,7 @@ class UserClub {
     if (deleted) {
       return `Deleted user ${deleted.username} from club ${deleted.clubId}`;
     } else {
-      return `Unable to delete ${this.username} from club ${this.clubId}`;
+      throw new Error(`Unable to delete ${this.username} from club ${this.clubId}`);
     }
   }
   

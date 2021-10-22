@@ -28,13 +28,20 @@ async function seedDb() {
   const userClubResult = await db.query(`
     INSERT INTO users_clubs (username, club_id)
     VALUES ('test1', $1), ('test2', $2)
+    RETURNING username, club_id AS "clubId"
   `, [club1.id, club2.id]);
+  const userClub1Data = userClubResult.rows[0];
+  const userClub2Data = userClubResult.rows[1];
+  const userClub1 = new UserClub(userClub1Data.username, userClub1Data.clubId);
+  const userClub2 = new UserClub(userClub2Data.username, userClub2Data.clubId);
   
   return {
     club1,
     club2,
     user1,
     user2,
+    userClub1,
+    userClub2
   }
 }
 
