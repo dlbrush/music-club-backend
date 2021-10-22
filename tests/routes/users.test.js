@@ -6,7 +6,6 @@ const db = require('../../db');
 const { clearDb, createTestObjects } = require('../setup');
 const { DEFAULT_PROFILE_IMG } = require('../../helpers/constants');
 const User = require('../../models/User');
-const MembershipService = require('../../services/MembershipService');
 const UserClub = require('../../models/UserClub');
 
 describe('users routes', () => {
