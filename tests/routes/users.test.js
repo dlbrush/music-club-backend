@@ -166,6 +166,20 @@ describe('users routes', () => {
         });
       });
 
+      it('Returns error if required field is missing', async () => {
+        delete testRegisterBody.username;
+        const response = await request(app)
+                               .post('/users/register')
+                               .send(testRegisterBody);
+        expect(response.status).toEqual(400);
+        expect(response.body).toEqual({
+          error: {
+            message: expect.any(String),
+            status: 400
+          }
+        });
+      });
+
       it('Returns error if passed extra properties', async () => {
         testRegisterBody.extra = 'abc';
         const response = await request(app)
@@ -257,6 +271,20 @@ describe('users routes', () => {
 
       it('Returns error if profile URL does not match image format', async () => {
         testCreateBody.profileImgUrl = 'notAnEmail';
+        const response = await request(app)
+                               .post('/users')
+                               .send(testCreateBody);
+        expect(response.status).toEqual(400);
+        expect(response.body).toEqual({
+          error: {
+            message: expect.any(String),
+            status: 400
+          }
+        });
+      });
+
+      it('Returns error if required field is missing', async () => {
+        delete testCreateBody.username;
         const response = await request(app)
                                .post('/users')
                                .send(testCreateBody);
@@ -450,7 +478,7 @@ describe('users routes', () => {
       });
     });
 
-    describe('PATCH /:username', () => {
+    describe('DELETE /:username', () => {
 
       it('Returns message on success', async () => {
         const response = await request(app)
