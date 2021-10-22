@@ -1,5 +1,6 @@
 const db = require('../../db');
 const Club = require('../../models/Club');
+const User = require('../../models/User');
 const { DEFAULT_BANNER_IMG } = require('../../helpers/constants');
 const { seedDb, clearDb } = require('../setup.js');
 
@@ -94,154 +95,108 @@ describe('Club model', () => {
     });
   });
 
-  // describe('#create', () => {
-  //   it('Returns user with all passed attributes', async () => {
-  //     const user = await User.create('test3', 'test3', 'test3@test.com', 'http://test.com/3.jpg', true);
-  //     expect(user).toEqual({
-  //       username: 'test3',
-  //       email: 'test3@test.com',
-  //       profileImgUrl: 'http://test.com/3.jpg',
-  //       admin: true
-  //     });
-  //   });
+  describe('#create', () => {
+    it('Returns club with all passed attributes', async () => {
+      const club = await Club.create('testClub3', 'testing club 3', user1, true, 'https://clubtest.com/a.jpg');
+      expect(club).toEqual({
+        id: expect.any(Number),
+        name: 'testClub3',
+        description: 'testing club 3',
+        founder: 'test1',
+        isPublic: true,
+        founded: expect.any(Date),
+        bannerImgUrl: 'https://clubtest.com/a.jpg'
+      });
+    });
 
-  //   it('Adds user to database', async () => {
-  //     await User.create('test3', 'test3', 'test3@test.com', 'http://test.com/3.jpg', true);
-  //     const dbUser = await User.get('test3');
-  //     expect(dbUser).toEqual({
-  //       username: 'test3',
-  //       email: 'test3@test.com',
-  //       profileImgUrl: 'http://test.com/3.jpg',
-  //       admin: true
-  //     });
-  //   });
+    it('Adds club to database', async () => {
+      const club = await Club.create('testClub3', 'testing club 3', user1, true, 'https://clubtest.com/a.jpg');
+      const dbClub = await Club.get(club.id);
+      expect(dbClub).toEqual({
+        id: expect.any(Number),
+        name: 'testClub3',
+        description: 'testing club 3',
+        founder: 'test1',
+        isPublic: true,
+        founded: expect.any(Date),
+        bannerImgUrl: 'https://clubtest.com/a.jpg'
+      })
+    });
 
-  //   it('Returns a user with default values if not all values passed', async () => {
-  //     const user = await User.create('test3', 'test3', 'test3@test.com');
-  //     expect(user).toEqual({
-  //       username: 'test3',
-  //       email: 'test3@test.com',
-  //       profileImgUrl: DEFAULT_PROFILE_IMG,
-  //       admin: false
-  //     });
-  //   });
-  // });
+    it('Returns a club with default banner if banner not passed', async () => {
+      const club = await Club.create('testClub3', 'testing club 3', user1, true);
+      expect(club.bannerImgUrl).toEqual(DEFAULT_BANNER_IMG);
+    });
+  });
 
-  // describe('#register', () => {
-  //   it('Returns a JWT with username and admin status in the body', async () => {
-  //     const userJwt = await User.register('test3', 'test3', 'test3@test.com', 'http://test.com/3.jpg');
-  //     expect(userJwt).toEqual(expect.any(String));
-  //     const decoded = jwt.decode(userJwt);
-  //     expect(decoded).toMatchObject({
-  //       username: 'test3',
-  //       admin: false
-  //     });
-  //   });
+  describe('#delete', () => {
+    it('Returns success message on success', async () => {
+      const msg = await club1.delete();
+      expect(msg).toEqual(`Deleted club ${club1.name}. (ID: ${club1.id})`);
+    });
 
-  //   it('Adds user to database', async () => {
-  //     await User.register('test3', 'test3', 'test3@test.com', 'http://test.com/3.jpg');
-  //     const dbUser = await User.get('test3');
-  //     expect(dbUser).toEqual({
-  //       username: 'test3',
-  //       email: 'test3@test.com',
-  //       profileImgUrl: 'http://test.com/3.jpg',
-  //       admin: false
-  //     });
-  //   });
-  // });
+    it('Removes user from DB', async () => {
+      await club1.delete();
+      const club = await Club.get(club1.id);
+      expect(club).toEqual(undefined);
+    });
 
-  // describe('#checkExisting', () => {
-  //   it('Returns undefined if user does not exist in the database', async () => {
-  //     const user = await User.checkExisting('abc', 'abc');
-  //     expect(user).toEqual(undefined);
-  //   });
+    it('Throws error if club object does not match club in DB', async () => {
+      try {
+        const badClub = new Club(9999);
+        await badClub.delete();
+      } catch(e) {
+        expect(e.message).toEqual(`No club deleted. (ID: ${club1.id})`);
+      }
+    });
+  });
 
-  //   it('Throws error with username and email if user with both exists', async () => {
-  //     try {
-  //       const user = await User.checkExisting('test2', 'test2@test.com');
-  //     } catch(e) {
-  //       expect(e.message).toEqual('User with username test2 and email test2@test.com already exists.');
-  //     }
-  //   });
+  describe('#save', () => {
+    it('Returns success message on success', async () => {
+      const msg = await club1.save();
+      expect(msg).toEqual(`Updated club ${club1.name}. (ID: ${club1.id})`);
+    });
 
-  //   it('Throws error with username if only username exists', async () => {
-  //     try {
-  //       const user = await User.checkExisting('test2', 'test3@test.com');
-  //     } catch(e) {
-  //       expect(e.message).toEqual('User with username test2 already exists.');
-  //     }
-  //   });
+    it('Updates club in DB when changes are made', async () => {
+      club1.name = 'New club';
+      club1.description = 'Come on in'
+      club1.bannerImgUrl = 'http://google.com/new.jpg';
+      await club1.save();
+      const club = await Club.get(club1.id);
+      expect(club).toEqual({
+        id: club1.id,
+        name: club1.name,
+        description: club1.description,
+        founder: club1.founder,
+        isPublic: club1.isPublic,
+        founded: club1.founded,
+        bannerImgUrl: club1.bannerImgUrl
+      });
+    });
 
-  //   it('Throws error with email if only email exists', async () => {
-  //     try {
-  //       const user = await User.checkExisting('test3', 'test2@test.com');
-  //     } catch(e) {
-  //       expect(e.message).toEqual('User with email test2@test.com already exists.');
-  //     }
-  //   });
-  // });
+    it('Makes no changes otherwise', async () => {
+      await club1.save();
+      const club = await Club.get(club1.id);
+      expect(club).toEqual({
+        id: club1.id,
+        name: club1.name,
+        description: club1.description,
+        founder: club1.founder,
+        isPublic: club1.isPublic,
+        founded: club1.founded,
+        bannerImgUrl: club1.bannerImgUrl
+      });
+    });
 
-  // describe('#delete', () => {
-  //   it('Returns success message on success', async () => {
-  //     const msg = await user1.delete();
-  //     expect(msg).toEqual('Deleted user test1.');
-  //   });
-
-  //   it('Removes user from DB', async () => {
-  //     await user1.delete();
-  //     const user = await User.get('test1');
-  //     expect(user).toEqual(undefined);
-  //   });
-
-  //   it('Throws error if user object does not match user in DB', async () => {
-  //     try {
-  //       const badUser = new User('abc');
-  //       await badUser.delete();
-  //     } catch(e) {
-  //       expect(e.message).toEqual('Unable to delete user abc');
-  //     }
-  //   });
-  // });
-
-  // describe('#save', () => {
-  //   it('Returns success message on success', async () => {
-  //     const msg = await user1.save();
-  //     expect(msg).toEqual('Updated user test1.');
-  //   });
-
-  //   it('Updates user in DB when changes are made', async () => {
-  //     user1.email = 'new@test.com';
-  //     user1.profileImgUrl = 'http://google.com/new.jpg';
-  //     await user1.save();
-  //     const user = await User.get('test1');
-  //     expect(user).toEqual({
-  //       username: user1.username,
-  //       email: user1.email,
-  //       profileImgUrl: user1.profileImgUrl,
-  //       admin: user1.admin
-  //     });
-  //   });
-
-  //   it('Makes no changes otherwise', async () => {
-  //     await user1.save();
-  //     const user = await User.get('test1');
-  //     expect(user).toEqual({
-  //       username: user1.username,
-  //       email: user1.email,
-  //       profileImgUrl: user1.profileImgUrl,
-  //       admin: user1.admin
-  //     });
-  //   });
-
-  //   it('Throws error if user object does not match user in DB', async () => {
-  //     try {
-  //       const badUser = new User('abc');
-  //       await badUser.save();
-  //     } catch(e) {
-  //       expect(e.message).toEqual('Unable to update user abc');
-  //     }
-  //   });
-  // });
+    it('Throws error if club object does not match club in DB', async () => {
+      try {
+        const badClub = new Club(9999, 'bad');
+        await badClub.save();
+      } catch(e) {
+        expect(e.message).toEqual(`Unable to update club ${badClub.name}. (ID: ${badClub.id})`);
+      }
+    });
+  });
 
   afterAll(async () => {
     await db.end();

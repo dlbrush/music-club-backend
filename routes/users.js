@@ -6,7 +6,6 @@ const MembershipService = require('../services/MembershipService');
 const { validateRequest } = require('../helpers/validation');
 const newUserSchema = require('../schemas/newUser.json');
 const updateUserSchema = require('../schemas/updateUser.json');
-const userSearchSchema = require('../schemas/userSearch.json');
 
 const router = new express.Router();
 

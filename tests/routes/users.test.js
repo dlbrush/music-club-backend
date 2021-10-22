@@ -60,7 +60,7 @@ describe('users routes', () => {
       });
     });
 
-    it('Returns empty string in user object when no users matched', async () => {
+    it('Returns empty array in user object when no users matched', async () => {
       const response = await request(app).get('/users?username=abc');
       expect(response.status).toEqual(200);
       expect(response.body).toEqual({ users: []});

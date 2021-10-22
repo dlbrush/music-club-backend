@@ -79,24 +79,21 @@ class Club {
   }
 
   static async create(name, description, founder, isPublic, bannerImgUrl) {
-    // Create a date object for the moment this club is created
-    const now = new Date();
-
     // Include column and parameter for banner image only if one was passed
     const bannerColumnName = bannerImgUrl ? ', banner_img_url' : '';
-    const bannerParameter = bannerImgUrl ? ', $6' : '';
+    const bannerParameter = bannerImgUrl ? ', $5' : '';
 
-    const parameters = [name, description, now, founder.username, isPublic];
+    const parameters = [name, description, founder.username, isPublic];
     if (bannerImgUrl) parameters.push(bannerImgUrl);
 
     const result = await db.query(`
       INSERT INTO clubs (name, description, founded, founder, is_public${bannerColumnName})
-      VALUES ($1, $2, $3, $4, $5${bannerParameter})
-      RETURNING id, name, description, founded, founder, is_public, banner_img_url
+      VALUES ($1, $2, current_date, $3, $4${bannerParameter})
+      RETURNING id, name, description, founded, founder, is_public AS "isPublic", banner_img_url AS "bannerImgUrl"
     `, parameters);
 
     const newClub = result.rows[0];
-    return new Club(newClub.id, newClub.name, newClub.description, newClub.founder, newClub.is_public, now, newClub.bannerImgUrl);
+    return new Club(newClub.id, newClub.name, newClub.description, newClub.founder, newClub.isPublic, new Date(newClub.founded), newClub.bannerImgUrl);
   }
 
   // Instance methods

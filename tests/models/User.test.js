@@ -58,6 +58,7 @@ describe('User model', () => {
 
   describe('#getSome', () => {
     it('Returns all users matching passed array of usernames', async () => {
+      console.log(club1.founded);
       const users = await User.getSome(['test2']);
       expect(users.length).toEqual(1);
       expect(users[0]).toEqual({
