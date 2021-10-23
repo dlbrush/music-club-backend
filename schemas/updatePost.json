@@ -1,0 +1,15 @@
+{
+  "type": "object",
+  "required": [],
+  "properties": {
+      "content": {
+          "type": "string",
+          "description": "Content of the post the user has made recommending the album"
+      },
+      "recTracks": {
+          "type": "string",
+          "description": "Tracks recommended by the user from this album"
+      }
+  },
+  "additionalProperties": false
+}

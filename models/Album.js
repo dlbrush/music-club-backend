@@ -16,7 +16,10 @@ class Album {
       WHERE discogs_id=$1
     `, [discogsId]);
     const album = result.rows[0];
-    return new Album(album.discogsId, album.year, album.artist, album.title, album.coverImgUrl);
+    if (album) {
+      return new Album(album.discogsId, album.year, album.artist, album.title, album.coverImgUrl);
+    }
+    // Returns undefined if nothing is found
   }
 
   static async create(discogsId, year, artist, title, coverImgUrl) {

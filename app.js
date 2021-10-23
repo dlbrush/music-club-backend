@@ -4,6 +4,7 @@ const cookieParser = require('cookie-parser');
 
 const userRoutes = require('./routes/users');
 const clubRoutes = require('./routes/clubs');
+const postRoutes = require('./routes/posts');
 const { authenticateToken } = require('./middleware/auth');
 
 const app = express();
@@ -19,6 +20,7 @@ app.use(authenticateToken);
 // Routes
 app.use('/users', userRoutes);
 app.use('/clubs', clubRoutes);
+app.use('/posts', postRoutes);
 
 /** Generic error handler; anything unhandled goes here. */
 app.use(function (err, req, res, next) {

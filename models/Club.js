@@ -116,6 +116,7 @@ class Club {
       UPDATE clubs
       SET name=$1, description=$2, banner_img_url=$3
       WHERE id = $4
+      RETURNING id
     `, [this.name, this.description, this.bannerImgUrl, this.id]);
     if (result.rows) {
       return `Updated club ${this.name}. (ID: ${this.id})`;

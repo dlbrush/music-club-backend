@@ -40,12 +40,18 @@ CREATE TABLE albums (
 CREATE TABLE posts (
   id SERIAL PRIMARY KEY,
   club_id INTEGER NOT NULL,
-  content TEXT,
+  content TEXT NOT NULL DEFAULT '',
   discogs_id INTEGER NOT NULL REFERENCES albums ON DELETE CASCADE,
-  votes INTEGER NOT NULL DEFAULT 0,
   posted_at TIMESTAMP NOT NULL,
-  posted_by TEXT NOT NULL REFERENCES users ON DELETE CASCADE
-  rec_tracks TEXT
+  posted_by TEXT NOT NULL REFERENCES users ON DELETE CASCADE,
+  rec_tracks TEXT NOT NULL DEFAULT ''
+);
+
+CREATE TABLE votes (
+  post_id INTEGER NOT NULL REFERENCES posts ON DELETE CASCADE,
+  username TEXT REFERENCES users ON DELETE SET NULL,
+  liked BOOLEAN NOT NULL,
+  PRIMARY KEY (post_id, username)
 );
 
 CREATE TABLE albums_genres (

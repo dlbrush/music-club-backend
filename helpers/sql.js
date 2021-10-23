@@ -40,6 +40,23 @@ function handleUserClubFilters(username, clubId) {
   return { parameters, string }
 }
 
+function handleVoteFilters(postId, username) {
+  let parameters = [];
+  let string = '';
+  let paramCount = 0;
+  if (postId) {
+    paramCount++;
+    string += `${addWhereOrAnd(string)} post_id=$${paramCount}`;
+    parameters.push(postId);
+  }
+  if (username) {
+    paramCount++;
+    string = `${addWhereOrAnd(string)} username=$${paramCount}`;
+    parameters.push(username);
+  }
+  return { parameters, string }
+}
+
 function createParamList(values, column) {
   let string = '';
   for (let i = 1; i <= values.length; i++) {
@@ -52,16 +69,16 @@ function makeGenreValuesList(genres) {
   let result = '';
   let genreParamCount = 1;
   function commaOrValues(string) {
-    return string.length ? ',' : 'VALUES';
+    return string.length ? ', ' : 'VALUES';
   }
   genres.forEach(genre => {
     genreParamCount++;
-    result += `${commaOrValues(result)} ($1, ${genreParamCount})`;
+    result += `${commaOrValues(result)} ($1, $${genreParamCount})`;
   });
   return result;
 }
 
-function getOptionalPostStrings(recTracks, content, parameters) {
+function getOptionalPostColumns(recTracks, content, parameters) {
   // Param count starts at 3 because there are 3 columns that will always be passed 
   let paramCount = 3;
   let columns = '';
@@ -94,7 +111,8 @@ module.exports = {
   handleUserFilters,
   handleClubFilters,
   handleUserClubFilters,
+  handleVoteFilters,
   createParamList,
   makeGenreValuesList,
-  getOptionalPostStrings
+  getOptionalPostColumns
 }

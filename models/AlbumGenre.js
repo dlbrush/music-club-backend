@@ -23,6 +23,7 @@ class AlbumGenre {
    * @param {string[]} genres 
    */
   static async createMany(discogsId, genres) {
+    console.log(genres);
     const valuesList = makeGenreValuesList(genres);
     const result = await db.query(`
       INSERT INTO albums_genres (discogs_id, genre)

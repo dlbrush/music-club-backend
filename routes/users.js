@@ -66,7 +66,7 @@ router.post('/login', async function (req, res, next) {
   }
 });
 
-router.post('/', ensureAdmin, async function (req, res, next) {
+router.post('/', async function (req, res, next) {
   try {
     // Validate request
     validateRequest(req.body, newUserSchema);

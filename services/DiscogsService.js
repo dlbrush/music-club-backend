@@ -19,7 +19,7 @@ class DiscogsService {
   static async populateAlbumData(discogsId) {
     try {
       // Get master release data from discogs
-      const response = await axios.get(`${discogsBaseUrl}/masters/${discogsBaseUrl}`, requestConfig);
+      const response = await axios.get(`${discogsBaseUrl}/masters/${discogsId}`, requestConfig);
 
       // Pull relevant data from JSON response
       const albumData = response.data;
@@ -33,6 +33,8 @@ class DiscogsService {
 
       // Add album to DB
       const newAlbum = await Album.create(discogsId, year, artistString, title, primaryImgUrl);
+
+      console.log("It wasn't the album");
 
       // Create genre objects for each attached genre
       const genreObjects = await AlbumGenre.createMany(discogsId, genres);
