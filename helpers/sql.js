@@ -48,6 +48,39 @@ function createParamList(values, column) {
   return string;
 }
 
+function makeGenreValuesList(genres) {
+  let result = '';
+  let genreParamCount = 1;
+  function commaOrValues(string) {
+    return string.length ? ',' : 'VALUES';
+  }
+  genres.forEach(genre => {
+    genreParamCount++;
+    result += `${commaOrValues(result)} ($1, ${genreParamCount})`;
+  });
+  return result;
+}
+
+function getOptionalPostStrings(recTracks, content, parameters) {
+  // Param count starts at 3 because there are 3 columns that will always be passed 
+  let paramCount = 3;
+  let columns = '';
+  let values = '';
+  if(recTracks) {
+    paramCount++;
+    columns += ', rec_tracks';
+    values += `, $${paramCount}`
+    parameters.push(recTracks);
+  }
+  if(content) {
+    paramCount++;
+    columns += ', content';
+    values += `, $${paramCount}`
+    parameters.push(content);
+  }
+  return {columns, values}
+}
+
 function addWhereOrAnd(string) {
   return string.length ? ' AND' : 'WHERE'
 }
@@ -61,5 +94,7 @@ module.exports = {
   handleUserFilters,
   handleClubFilters,
   handleUserClubFilters,
-  createParamList
+  createParamList,
+  makeGenreValuesList,
+  getOptionalPostStrings
 }

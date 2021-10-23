@@ -29,14 +29,28 @@ CREATE TABLE invitations (
   PRIMARY KEY (club_id, username)
 );
 
+CREATE TABLE albums (
+  discogs_id INTEGER PRIMARY KEY,
+  year INTEGER,
+  artist TEXT NOT NULL,
+  title TEXT NOT NULL,
+  cover_img_url TEXT NOT NULL
+);
+
 CREATE TABLE posts (
   id SERIAL PRIMARY KEY,
   club_id INTEGER NOT NULL,
   content TEXT,
-  discogs_release INTEGER NOT NULL,
+  discogs_id INTEGER NOT NULL REFERENCES albums ON DELETE CASCADE,
   votes INTEGER NOT NULL DEFAULT 0,
   posted_at TIMESTAMP NOT NULL,
+  posted_by TEXT NOT NULL REFERENCES users ON DELETE CASCADE
   rec_tracks TEXT
+);
+
+CREATE TABLE albums_genres (
+  discogs_id INTEGER NOT NULL REFERENCES albums ON DELETE CASCADE,
+  genre TEXT NOT NULL
 );
 
 CREATE TABLE comments (

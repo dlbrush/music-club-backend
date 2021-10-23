@@ -1,6 +1,6 @@
 {
   "name": "music-club-backend",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "An Express backend for the Music Club app",
   "main": "server.js",
   "dependencies": {
@@ -18,7 +18,8 @@
   },
   "scripts": {
     "test": "jest -i",
-    "createdb": "psql < create-db.sql"
+    "createdb": "psql < create-dbs.sql",
+    "seeddb": "psql < seed.sql"
   },
   "repository": {
     "type": "git",

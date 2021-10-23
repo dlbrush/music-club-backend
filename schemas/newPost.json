@@ -1,0 +1,21 @@
+{
+  "type": "object",
+  "required": [
+      "discogsId"
+  ],
+  "properties": {
+      "content": {
+          "type": "string",
+          "description": "Text of the post"
+      },
+      "discogsId": {
+          "type": "integer",
+          "description": "ID in Discogs database of the album being recommended"
+      },
+      "recTracks": {
+          "type": "string",
+          "description": "Tracks recommended by the poster"
+      }
+  },
+  "additionalProperties": false
+}

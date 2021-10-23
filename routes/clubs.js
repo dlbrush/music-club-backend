@@ -1,13 +1,18 @@
 const express = require('express');
 
-const { BadRequestError, NotFoundError } = require('../helpers/errors');
+const { BadRequestError, NotFoundError, UnauthorizedError } = require('../helpers/errors');
 const { validateRequest } = require('../helpers/validation');
 const User = require('../models/User');
 const Club = require('../models/Club');
 const newClubSchema = require('../schemas/newClub.json');
 const clubSearchSchema = require('../schemas/clubSearch.json');
 const updateClubSchema = require('../schemas/updateClub.json');
+const newPostSchema = require('../schemas/newPost.json');
 const MembershipService = require('../services/MembershipService');
+const { ensureLoggedIn } = require('../middleware/auth');
+const Album = require('../models/Album');
+const DiscogsService = require('../services/DiscogsService');
+const Post = require('../models/Post');
 
 const router = new express.Router();
 
@@ -64,6 +69,45 @@ router.post('/', async function(req, res, next) {
     const joined = await MembershipService.addFounder(founderUser, newClub);
 
     return res.status(201).json({ newClub });
+  } catch(e) {
+    return next(e);
+  }
+});
+
+router.post('/:clubId/new-post', ensureLoggedIn, async function(req, res, next) {
+  try {
+    // Check that club ID is integer and corresponds to real club
+    const clubId = parseInt(req.params.clubId);
+    if (!clubId) {
+      throw new BadRequestError('Club ID must be an integer.')
+    }
+    const club = await Club.get(clubId);
+    if (!club) {
+      throw new NotFoundError(`Club with ID ${clubId} not found.`);
+    }
+
+    // Try to convert discogs ID to integer
+    req.body.discogsId = parseInt(req.body.discogsId);
+    validateRequest(req.body, newPostSchema);
+
+    const { content, discogsId, recTracks } = req.body;
+
+    // Check that the logged in user is a member of the club they're trying to post to
+    const isMember = await MembershipService.checkMembership(req.user.username, clubId);
+    if (!isMember) {
+      throw new UnauthorizedError('Unauthorized: You are not a member of the club you are attempting to post to.');
+    }
+
+    // Check that Discogs ID corresponds to existing album - if not, create album in DB with discogs data
+    let album = await Album.get(discogsId);
+    if (!album) {
+      const { newAlbum } = await DiscogsService.populateAlbumData(discogsId);
+      album = newAlbum;
+    }
+
+    // Finally, create the post with all of the data we have confirmed
+    const newPost = await Post.create(clubId, discogsId, req.user.username, recTracks, content);
+    return res.status(201).json({ newPost });
   } catch(e) {
     return next(e);
   }
