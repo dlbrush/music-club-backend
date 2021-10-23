@@ -1,13 +1,20 @@
 const express = require('express');
 const morgan = require('morgan');
+const cookieParser = require('cookie-parser');
 
 const userRoutes = require('./routes/users');
 const clubRoutes = require('./routes/clubs');
+const { authenticateToken } = require('./middleware/auth');
 
 const app = express();
 
+// Setup
 app.use(express.json());
+app.use(cookieParser());
 app.use(morgan('tiny'));
+
+// Authentication
+app.use(authenticateToken);
 
 // Routes
 app.use('/users', userRoutes);

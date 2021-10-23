@@ -112,7 +112,8 @@ class User {
    */
   static async register(username, password, email, profileImgUrl) {
     const newUser = await User.create(username, password, email, profileImgUrl);
-    return generateUserToken(newUser.username, newUser.admin);
+    const token = generateUserToken(newUser.username, newUser.admin);
+    return { newUser, token }
   }
 
   static async checkExisting(username, email) {
@@ -130,6 +131,26 @@ class User {
       // Throw generic error with message about duplicate user
       throw new Error(message);
     }
+  }
+
+  static async authenticate(username, password) {
+    const result = await db.query(`
+      SELECT username, admin, password
+      FROM users
+      WHERE username=$1
+    `, [username]);
+    const user = result.rows[0];
+    if (user) {
+      const isValid = await bcrypt.compare(password, user.password);
+      const token = generateUserToken(user.username, user.admin);
+      if (isValid) {
+        return {
+          message: `Successfully logged in user ${username}.`,
+          token
+        }
+      }
+    }
+    throw new Error('Invalid username or password.')
   }
 
   // Instance methods

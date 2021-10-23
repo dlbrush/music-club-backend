@@ -6,10 +6,12 @@ const MembershipService = require('../services/MembershipService');
 const { validateRequest } = require('../helpers/validation');
 const newUserSchema = require('../schemas/newUser.json');
 const updateUserSchema = require('../schemas/updateUser.json');
+const { AUTH_DURATION } = require('../config');
+const { ensureAdmin, ensureLoggedIn } = require('../middleware/auth');
 
 const router = new express.Router();
 
-router.get('/', async function (req, res, next) {
+router.get('/', ensureLoggedIn, async function (req, res, next) {
   try {
     const users = await User.getAll(req.query['username']);
     return res.json({ users });
@@ -18,7 +20,7 @@ router.get('/', async function (req, res, next) {
   }
 });
 
-router.get('/:username', async function (req, res, next) {
+router.get('/:username', ensureLoggedIn, async function (req, res, next) {
   try {
     const user = await User.get(req.params.username);
     if (!user) {
@@ -44,15 +46,27 @@ router.post('/register', async function (req, res, next) {
     }
 
     // Register user and receive JWT with username and admin status
-    const token = await User.register(username, password, email, profileImgUrl);
+    const { newUser, token } = await User.register(username, password, email, profileImgUrl);
 
-    return res.status(201).json({ token });
+    res.cookie('token', token, {maxAge: AUTH_DURATION, httpOnly: true});
+    return res.status(201).json({ newUser });
   } catch (e) {
     return next(e);
   }
 });
 
-router.post('/', async function (req, res, next) {
+router.post('/login', async function (req, res, next) {
+  try {
+    const { username, password } = req.body;
+    const { message, token } = await User.authenticate(username, password);
+    res.cookie('token', token, {maxAge: AUTH_DURATION, httpOnly: true});
+    res.json({ message });
+  } catch(e) {
+    next(e)
+  }
+});
+
+router.post('/', ensureAdmin, async function (req, res, next) {
   try {
     // Validate request
     validateRequest(req.body, newUserSchema);

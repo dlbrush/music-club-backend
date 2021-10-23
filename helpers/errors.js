@@ -28,8 +28,22 @@ class BadRequestError extends ExpressError {
   }
 }
 
+class UnauthorizedError extends ExpressError {
+  constructor(message) {
+    super(message, 403);
+  }
+}
+
+class UnauthenticatedError extends ExpressError {
+  constructor(message) {
+    super(message, 401)
+  }
+}
+
 module.exports = {
   ExpressError,
   NotFoundError,
-  BadRequestError
+  BadRequestError,
+  UnauthorizedError,
+  UnauthenticatedError
 };

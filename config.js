@@ -15,9 +15,21 @@ function getDatabaseUri() {
       : process.env.DATABASE_URL || `music_club`;
 }
 
+// Millisecond value for how long user's auth cookie should last
+const AUTH_DURATION = 86400000 //24hr
+
+// Discogs API info
+// const DISCOGS_CONSUMER_KEY = process.env.DISCOGS_CONSUMER_KEY;
+// const DISCOGS_CONSUMER_SECRET = process.env.DISCOGS_CONSUMER_SECRET;
+const DISCOGS_USER_AGENT = process.env.DISCOGS_USER_AGENT;
+const DISCOGS_ACCESS_TOKEN = process.env.DISCOGS_ACCESS_TOKEN;
+
 module.exports = {
   PORT,
   SECRET_KEY,
   BCRYPT_WORK_FACTOR,
-  getDatabaseUri
+  getDatabaseUri,
+  DISCOGS_ACCESS_TOKEN,
+  DISCOGS_USER_AGENT,
+  AUTH_DURATION
 };
