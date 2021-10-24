@@ -80,6 +80,8 @@ async function createTestObjects() {
   const userClub1 = await UserClub.create('test1', club1.id);
   const userClub2 = await UserClub.create('test2', club2.id);
   const album1 = await Album.create(33170, 1884, 'Green Day', 'Dookie', 'https://img.discogs.com/_aD_ZCgjICJ9ilW_hdav_yk1tSo=/fit-in/600x600/filters:strip_icc():format(jpeg):mode_rgb():quality(90)/discogs-images/R-2103788-1507814667-9558.jpeg.jpg');
+  const post1 = await Post.create(club1.id, album1.discogsId, user1.username, 'Test Track', 'Check this out');
+  const post2 = await Post.create(club2.id, album1.discogsId, user2.username, 'Test Track', 'Check this out');
   return {
     user1,
     user2,
@@ -87,7 +89,9 @@ async function createTestObjects() {
     club2,
     userClub1,
     userClub2,
-    album1
+    album1,
+    post1,
+    post2
   }
 }
 
@@ -96,6 +100,9 @@ async function clearDb() {
   await db.query('DELETE FROM clubs');
   await db.query('DELETE FROM users_clubs');
   await db.query('DELETE FROM albums');
+  await db.query('DELETE FROM posts');
+  await db.query('DELETE FROM albums_genres');
+  await db.query('DELETE FROM votes');
 }
 
 module.exports = {

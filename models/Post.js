@@ -31,6 +31,7 @@ class Post {
       SELECT id, club_id AS "clubId", discogs_id AS "discogsId", posted_by as "postedBy", posted_at AS "postedAt", content
       FROM posts
       ${filterString}
+      ORDER BY id ASC
     `, params);
 
     return result.rows.map(post => {
