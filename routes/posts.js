@@ -92,8 +92,8 @@ router.patch('/:postId', async function(req, res, next) {
 
     if (req.body.recTracks) post.recTracks = req.body.recTracks;
     if (req.body.content) post.content = req.body.content;
-    const msg = await post.save();
-    res.json({ message: msg, post });
+    const message = await post.save();
+    res.json({ message, post });
   } catch (e) {
     next(e);
   }
@@ -110,8 +110,8 @@ router.delete('/:postId', async function(req, res, next) {
       throw new NotFoundError(`Post with ID ${postId} not found.`);
     }
 
-    const msg = await post.delete();
-    res.json({ message: msg });
+    const message = await post.delete();
+    res.json({ message });
   } catch (e) {
     next(e)
   }

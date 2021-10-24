@@ -3,6 +3,7 @@ const request = require('supertest');
 
 const app = require('../../app');
 const db = require('../../db');
+const Post = require('../../models/Post');
 const { createTestObjects, clearDb, adminTokenCookie, userTokenCookie } = require('../setup');
 
 
@@ -198,6 +199,152 @@ describe('posts routes', () => {
         error: {
           status: 403,
           message: `Sorry, you must be a member of club with ID ${post2.clubId} to vote on post ${post2.id}`
+        }
+      });
+    });
+  });
+
+  describe('PATCH /:postId', () => {
+    let updatePostBody;
+
+    beforeEach(() => {
+      updatePostBody = {
+        content: 'New content',
+        recTracks: 'None'
+      }
+    });
+
+    it('Returns updated post on success', async () => {
+      const response = await request(app)
+                             .patch(`/posts/${post1.id}`)
+                             .send(updatePostBody);
+      expect(response.status).toEqual(200);
+      expect(response.body).toEqual({
+        message: `Updated post ${post1.id}.`,
+        post: {
+          id: post1.id,
+          clubId: post1.clubId,
+          discogsId: post1.discogsId,
+          postedAt: post1.postedAt.toISOString(),
+          postedBy: post1.postedBy,
+          content: updatePostBody.content,
+          recTracks: updatePostBody.recTracks
+        }
+      });
+    });
+
+    it('Updates post in the DB on success', async () => {
+      const response = await request(app)
+                             .patch(`/posts/${post1.id}`)
+                             .send(updatePostBody);
+      const post = await Post.get(post1.id);
+      expect(post).toEqual({
+        id: post1.id,
+        clubId: post1.clubId,
+        discogsId: post1.discogsId,
+        postedAt: post1.postedAt,
+        postedBy: post1.postedBy,
+        content: updatePostBody.content,
+        recTracks: updatePostBody.recTracks
+      });
+    });
+
+    it('Keeps everything the same when nothing is passed', async () => {
+      const response = await request(app)
+                             .patch(`/posts/${post1.id}`);
+      const post = await Post.get(post1.id);
+      expect(response.body).toEqual({
+        message: `Updated post ${post1.id}.`,
+        post: {
+          id: post1.id,
+          clubId: post1.clubId,
+          discogsId: post1.discogsId,
+          postedAt: post1.postedAt.toISOString(),
+          postedBy: post1.postedBy,
+          content: post1.content,
+          recTracks: post1.recTracks
+        }
+      });
+    });
+
+    it('Returns bad request error when postId is not an integer', async () => {
+      const response = await request(app)
+                             .patch(`/posts/abc`)
+                             .send(updatePostBody);
+      expect(response.status).toEqual(400);
+      expect(response.body).toEqual({
+        error: {
+          status: 400,
+          message: 'Post ID must be an integer.'
+        }
+      });
+    });
+
+    it('Returns bad request error when postId is not in DB', async () => {
+      const response = await request(app)
+                             .patch(`/posts/9999`)
+                             .send(updatePostBody);
+      expect(response.status).toEqual(404);
+      expect(response.body).toEqual({
+        error: {
+          status: 404,
+          message: 'Post with ID 9999 not found.'
+        }
+      });
+    });
+
+    it('Returns bad request error when passed extra properties in body', async () => {
+      updatePostBody.extra = 'no';
+      const response = await request(app)
+                             .patch(`/posts/${post1.id}`)
+                             .send(updatePostBody);
+      expect(response.status).toEqual(400);
+      expect(response.body).toEqual({
+        error: {
+          status: 400,
+          message: expect.any(String)
+        }
+      });
+    });
+  });
+
+  describe('DELETE /:postId', () => {
+    it('Returns message on success', async () => {
+      const response = await request(app)
+                             .delete(`/posts/${post1.id}`);
+      expect(response.status).toEqual(200);
+      expect(response.body).toEqual({
+        message: `Deleted post ${post1.id}.`
+      });
+    });
+
+    it('Deletes post in the DB on success', async () => {
+      const response = await request(app)
+                             .delete(`/posts/${post1.id}`);
+      const post = await Post.get(post1.id);
+      expect(post).toEqual(undefined);
+    });
+
+    it('Returns bad request error when postId is not an integer', async () => {
+      const response = await request(app)
+                             .delete(`/posts/abc`);
+      expect(response.status).toEqual(400);
+      expect(response.body).toEqual({
+        error: {
+          status: 400,
+          message: 'Post ID must be an integer.'
+        }
+      });
+    });
+
+    it('Returns bad request error when postId is not in DB', async () => {
+      const response = await request(app)
+                             .delete('/posts/9999');
+      expect(response.status).toEqual(404);
+      expect(response.body).toEqual({
+        error: {
+          status: 404,
+          message: 'Post with ID 9999 not found.'
         }
       });
     });
