@@ -1,13 +1,13 @@
 const express = require('express');
 
-const { BadRequestError, NotFoundError } = require('../helpers/errors');
+const { BadRequestError, NotFoundError, UnauthenticatedError } = require('../helpers/errors');
 const User = require('../models/User');
 const MembershipService = require('../services/MembershipService');
 const { validateRequest } = require('../helpers/validation');
 const newUserSchema = require('../schemas/newUser.json');
 const updateUserSchema = require('../schemas/updateUser.json');
 const { AUTH_DURATION } = require('../config');
-const { ensureAdmin, ensureLoggedIn } = require('../middleware/auth');
+const { ensureAdmin, ensureLoggedIn, ensureAdminOrSameUser } = require('../middleware/auth');
 
 const router = new express.Router();
 
@@ -20,7 +20,7 @@ router.get('/', ensureLoggedIn, async function (req, res, next) {
   }
 });
 
-router.get('/:username', ensureLoggedIn, async function (req, res, next) {
+router.get('/:username', ensureAdminOrSameUser, async function (req, res, next) {
   try {
     const user = await User.get(req.params.username);
     if (!user) {
@@ -58,7 +58,17 @@ router.post('/register', async function (req, res, next) {
 router.post('/login', async function (req, res, next) {
   try {
     const { username, password } = req.body;
-    const { message, token } = await User.authenticate(username, password);
+    let message;
+    let token;
+
+    try {
+      const authenticated = await User.authenticate(username, password);
+      message = authenticated.message;
+      token = authenticated.token;
+    } catch(e) {
+      throw new UnauthenticatedError(e.message);
+    }
+
     res.cookie('token', token, {maxAge: AUTH_DURATION, httpOnly: true});
     res.json({ message });
   } catch(e) {

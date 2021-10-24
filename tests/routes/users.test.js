@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 
 const app = require("../../app");
 const db = require('../../db');
-const { clearDb, createTestObjects } = require('../setup');
+const { clearDb, createTestObjects, adminTokenCookie, userTokenCookie } = require('../setup');
 const { DEFAULT_PROFILE_IMG } = require('../../helpers/constants');
 const User = require('../../models/User');
 const UserClub = require('../../models/UserClub');
@@ -27,8 +27,10 @@ describe('users routes', () => {
   });
 
   describe('GET /', () => {
-    it('Returns all users when no query string passed', async () => {
-      const response = await request(app).get('/users');
+    it('Returns all users for authorized user when no query string passed', async () => {
+      const response = await request(app)
+                             .get('/users')
+                             .set('Cookie', userTokenCookie);
       expect(response.status).toEqual(200);
       expect(response.body).toEqual({
         users: [
@@ -47,7 +49,9 @@ describe('users routes', () => {
     });
 
     it('Returns only users containing passed username string', async () => {
-      const response = await request(app).get('/users?username=1');
+      const response = await request(app)
+                             .get('/users?username=1')
+                             .set('Cookie', userTokenCookie);
       expect(response.status).toEqual(200);
       expect(response.body).toEqual({
         users: [
@@ -61,28 +65,61 @@ describe('users routes', () => {
     });
 
     it('Returns empty array in user object when no users matched', async () => {
-      const response = await request(app).get('/users?username=abc');
+      const response = await request(app)
+                             .get('/users?username=abc')
+                             .set('Cookie', userTokenCookie);
       expect(response.status).toEqual(200);
       expect(response.body).toEqual({ users: []});
-    })
+    });
+
+    it('Throws unauthenticated error when no token attached', async () => {
+      const response = await request(app)
+                             .get('/users');
+      expect(response.status).toEqual(401);
+      expect(response.body).toEqual({
+        error: {
+          status: 401,
+          message: 'Must be logged in to access this route'
+        }
+      });
+    });
   });
 
   describe('GET /:username', () => {
-    it('Returns details of passed username if it exists', async () => {
-      const response = await request(app).get('/users/test1');
+    it('Returns details of passed username for admin user', async () => {
+      const response = await request(app)
+                             .get('/users/test2')
+                             .set('Cookie', adminTokenCookie);
       expect(response.status).toEqual(200);
       expect(response.body).toEqual({
         user: {
-          username: user1.username,
-          email: user1.email,
-          admin: user1.admin,
-          profileImgUrl: user1.profileImgUrl
+          username: user2.username,
+          email: user2.email,
+          admin: user2.admin,
+          profileImgUrl: user2.profileImgUrl
+        }
+      });
+    });
+
+    it('Returns details of passed username for same user', async () => {
+      const response = await request(app)
+                             .get('/users/test2')
+                             .set('Cookie', userTokenCookie);
+      expect(response.status).toEqual(200);
+      expect(response.body).toEqual({
+        user: {
+          username: user2.username,
+          email: user2.email,
+          admin: user2.admin,
+          profileImgUrl: user2.profileImgUrl
         }
       });
     });
 
     it('Returns NotFoundError if username does not exist', async () => {
-      const response = await request(app).get('/users/abc');
+      const response = await request(app)
+                             .get('/users/abc')
+                             .set('Cookie', adminTokenCookie);
       expect(response.status).toEqual(404);
       expect(response.body).toEqual({
         error: {
@@ -91,7 +128,20 @@ describe('users routes', () => {
         }
       });
     });
+
+    it('Throws unauthorized error when user is not admin or user in route', async () => {
+      const response = await request(app)
+                             .get('/users/test1')
+                             .set('Cookie', userTokenCookie);
+      expect(response.status).toEqual(403);
+      expect(response.body).toEqual({
+        error: {
+          status: 403,
+          message: 'Unauthorized: Must be admin or the user in the request parameter to access this route'
+        }
+      });
     });
+  });
 
     describe('POST /register', () => {
       let testRegisterBody;
@@ -105,24 +155,27 @@ describe('users routes', () => {
         }
       });
 
-      it('Returns token on successful post', async () => {
+      it('Returns new user on successful post', async () => {
         const response = await request(app)
                                .post('/users/register')
                                .send(testRegisterBody);
         expect(response.status).toEqual(201);
         expect(response.body).toEqual({
-          token: expect.any(String)
+          newUser: {
+            username: testRegisterBody.username,
+            email: testRegisterBody.email,
+            profileImgUrl: testRegisterBody.profileImgUrl,
+            admin: false
+          }
         });
       });
 
-      it('Returns token containing username and admin status', async () => {
+      it('Attaches token as HTTPOnly cookie on successful post', async () => {
         const response = await request(app)
-                               .post('/users/register')
-                               .send(testRegisterBody);
-        expect(jwt.decode(response.body.token)).toMatchObject({
-          admin: false,
-          username: 'test3'
-        });
+          .post('/users/register')
+          .send(testRegisterBody);
+        expect(response.headers['set-cookie'][0]).toContain('token');
+        expect(response.headers['set-cookie'][0]).toContain('HttpOnly');
       });
 
       it('Creates user in database', async () => {
@@ -194,7 +247,7 @@ describe('users routes', () => {
         });
       });
 
-      it('Returns error if username and password are already in use', async () => {
+      it('Returns error if username and email are already in use', async () => {
         testRegisterBody.username = user1.username;
         testRegisterBody.email = user1.email;
         const response = await request(app)
@@ -207,6 +260,79 @@ describe('users routes', () => {
             status: 400
           }
         });
+      });
+    });
+
+    describe('POST /login', () => {
+      let testRegisterBody;
+
+      beforeEach(async () => {
+        testRegisterBody = {
+          username: 'test3',
+          password: 'test3',
+          email: 'test3@test.com',
+          profileImgUrl: 'https://test.com/3.jpg'
+        }
+        // Register a user to hash a valid password
+        await request(app)
+              .post('/users/register')
+              .send(testRegisterBody);
+      });
+
+      it('Returns success message with valid login', async () => {
+        const response = await request(app)
+                               .post('/users/login')
+                               .send({
+                                 username: testRegisterBody.username,
+                                 password: testRegisterBody.password
+                               });
+        expect(response.status).toEqual(200);
+        expect(response.body).toEqual({
+          message: `Successfully logged in user ${testRegisterBody.username}.`
+        });
+      });
+
+      it('Attaches an HTTPOnly cookie with token', async () => {
+        const response = await request(app)
+                               .post('/users/login')
+                               .send({
+                                 username: testRegisterBody.username,
+                                 password: testRegisterBody.password
+                               });
+        expect(response.headers['set-cookie'][0]).toContain('token');
+        expect(response.headers['set-cookie'][0]).toContain('HttpOnly');
+      });
+
+      it('Returns 401 error with invalid username', async () => {
+        const response = await request(app)
+                               .post('/users/login')
+                               .send({
+                                 username: 'abc',
+                                 password: testRegisterBody.password
+                               });
+        expect(response.status).toEqual(401);
+        expect(response.body).toEqual({
+          error: {
+            status: 401,
+            message: 'Invalid username or password.'
+          }
+        })
+      });
+
+      it('Returns 401 error with invalid password', async () => {
+        const response = await request(app)
+                               .post('/users/login')
+                               .send({
+                                 username: testRegisterBody.username,
+                                 password: 'abc'
+                               });
+        expect(response.status).toEqual(401);
+        expect(response.body).toEqual({
+          error: {
+            status: 401,
+            message: 'Invalid username or password.'
+          }
+        })
       });
     });
 

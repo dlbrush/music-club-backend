@@ -136,11 +136,22 @@ describe('User model', () => {
 
   describe('#register', () => {
     it('Returns a JWT with username and admin status in the body', async () => {
-      const userJwt = await User.register('test3', 'test3', 'test3@test.com', 'http://test.com/3.jpg');
-      expect(userJwt).toEqual(expect.any(String));
-      const decoded = jwt.decode(userJwt);
-      expect(decoded).toMatchObject({
+      const { token } = await User.register('test3', 'test3', 'test3@test.com', 'http://test.com/3.jpg');
+      expect(token).toEqual(expect.any(String));
+      const decoded = jwt.decode(token);
+      expect(decoded).toEqual({
         username: 'test3',
+        admin: false,
+        iat: expect.any(Number)
+      });
+    });
+
+    it('Returns user object', async () => {
+      const { newUser } = await User.register('test3', 'test3', 'test3@test.com', 'http://test.com/3.jpg');
+      expect(newUser).toEqual({
+        username: 'test3',
+        email: 'test3@test.com',
+        profileImgUrl: 'http://test.com/3.jpg',
         admin: false
       });
     });

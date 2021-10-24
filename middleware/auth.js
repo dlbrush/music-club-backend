@@ -30,6 +30,7 @@ function ensureAdminOrSameUser(req, res, next) {
   if (!admin && username !== req.params.username) {
     throw new UnauthorizedError('Unauthorized: Must be admin or the user in the request parameter to access this route');
   }
+  next();
 }
 
 function ensureLoggedIn(req, res, next) {

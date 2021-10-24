@@ -2,6 +2,11 @@ const db = require('../db');
 const User = require('../models/User');
 const Club = require('../models/Club');
 const UserClub = require('../models/UserClub');
+const { generateUserToken } = require('../helpers/auth');
+
+// Generate cookie strings for authorized requests
+const adminTokenCookie = `token=${generateUserToken('test1', true)}`;
+const userTokenCookie = `token=${generateUserToken('test2', false)}`;
 
 async function seedDb() {
   const result = await db.query(`
@@ -71,5 +76,7 @@ async function clearDb() {
 module.exports = {
   seedDb,
   createTestObjects,
-  clearDb
+  clearDb,
+  adminTokenCookie,
+  userTokenCookie
 }

@@ -1,13 +1,12 @@
 const express = require('express');
 
 const { NotFoundError, BadRequestError, UnauthorizedError } = require('../helpers/errors');
+const Post = require('../models/Post');
+const MembershipService = require('../services/MembershipService');
+const VoteService = require('../services/VoteService');
 const { validateRequest } = require('../helpers/validation');
 const { ensureLoggedIn } = require('../middleware/auth');
-const Post = require('../models/Post');
-const User = require('../models/User');
-const MembershipService = require('../services/MembershipService');
 const updatePostSchema = require('../schemas/updatePost.json');
-const VoteService = require('../services/VoteService');
 
 const router = new express.Router();
 
