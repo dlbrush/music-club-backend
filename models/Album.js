@@ -11,7 +11,7 @@ class Album {
 
   static async get(discogsId) {
     const result = await db.query(`
-      SELECT discogs_id AS "discogsId", year, artist, title, cover_img_url AS "discogsId"
+      SELECT discogs_id AS "discogsId", year, artist, title, cover_img_url AS "coverImgUrl"
       FROM albums
       WHERE discogs_id=$1
     `, [discogsId]);

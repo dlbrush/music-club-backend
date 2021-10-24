@@ -3,6 +3,8 @@ const User = require('../models/User');
 const Club = require('../models/Club');
 const UserClub = require('../models/UserClub');
 const { generateUserToken } = require('../helpers/auth');
+const Album = require('../models/Album');
+const Post = require('../models/Post');
 
 // Generate cookie strings for authorized requests
 const adminTokenCookie = `token=${generateUserToken('test1', true)}`;
@@ -39,6 +41,21 @@ async function seedDb() {
   const userClub2Data = userClubResult.rows[1];
   const userClub1 = new UserClub(userClub1Data.username, userClub1Data.clubId);
   const userClub2 = new UserClub(userClub2Data.username, userClub2Data.clubId);
+
+  const albumResult = await db.query(`
+  INSERT INTO albums (discogs_id, year, artist, title, cover_img_url)
+  VALUES (33170, 1994, 'Green Day', 'Dookie', 'https://img.discogs.com/_aD_ZCgjICJ9ilW_hdav_yk1tSo=/fit-in/600x600/filters:strip_icc():format(jpeg):mode_rgb():quality(90)/discogs-images/R-2103788-1507814667-9558.jpeg.jpg')
+  RETURNING discogs_id AS "discogsId", year, artist, title, cover_img_url AS "coverImgUrl"`);
+  const albumData = albumResult.rows[0];
+  const album1 = new Album(albumData.discogsId, albumData.year, albumData.artist, albumData.title, albumData.coverImgUrl);
+
+  const postResult = await db.query(`
+    INSERT INTO posts (club_id, content, discogs_id, posted_by, rec_tracks)
+    VALUES ($1, 'Check this out', $2, $3, 'Test track')
+    RETURNING id, club_id AS "clubId", content, discogs_id AS "discogsId", posted_at AS "postedAt", posted_by AS "postedBy", rec_tracks AS "recTracks"
+  `, [club1.id, album1.discogsId, user1.username]);
+  const postData = postResult.rows[0];
+  const post1 = new Post(postData.id, postData.clubId, postData.discogsId, new Date(postData.postedAt), postData.postedBy, postData.content, postData.recTracks);
   
   return {
     club1,
@@ -46,7 +63,9 @@ async function seedDb() {
     user1,
     user2,
     userClub1,
-    userClub2
+    userClub2,
+    album1,
+    post1
   }
 }
 
@@ -71,6 +90,7 @@ async function clearDb() {
   await db.query('DELETE FROM users');
   await db.query('DELETE FROM clubs');
   await db.query('DELETE FROM users_clubs');
+  await db.query('DELETE FROM albums');
 }
 
 module.exports = {

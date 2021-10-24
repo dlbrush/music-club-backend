@@ -58,7 +58,6 @@ describe('User model', () => {
 
   describe('#getSome', () => {
     it('Returns all users matching passed array of usernames', async () => {
-      console.log(club1.founded);
       const users = await User.getSome(['test2']);
       expect(users.length).toEqual(1);
       expect(users[0]).toEqual({
@@ -199,6 +198,39 @@ describe('User model', () => {
     });
   });
 
+  describe('#authenticate', () => {
+    let user;
+
+    beforeEach(async () => {
+      // Create a user before each test so we have a valid hash password to test against
+      user = await User.create('test3', 'test3', 'test3@test.com', 'http://test.com/3.jpg', true);
+    });
+
+    it('Returns success message and token with valid username and password', async () => {
+      const auth = await User.authenticate(user.username, 'test3');
+      expect(auth).toEqual({
+        message: `Successfully logged in user ${user.username}.`,
+        token: expect.any(String)
+      })
+    });
+
+    it('Throws error with invalid username', async () => {
+      try {
+        await User.authenticate('abc', 'test3');
+      } catch(e) {
+        expect(e.message).toEqual('Invalid username or password.');
+      }
+    });
+
+    it('Throws error with invalid password', async () => {
+      try {
+        await User.authenticate(user.username, 'abc');
+      } catch(e) {
+        expect(e.message).toEqual('Invalid username or password.');
+      }
+    });
+  })
+
   describe('#delete', () => {
     it('Returns success message on success', async () => {
       const msg = await user1.delete();
@@ -264,4 +296,4 @@ describe('User model', () => {
   afterAll(async () => {
     await db.end();
   })
-})
+});
