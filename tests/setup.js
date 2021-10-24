@@ -5,6 +5,7 @@ const UserClub = require('../models/UserClub');
 const { generateUserToken } = require('../helpers/auth');
 const Album = require('../models/Album');
 const Post = require('../models/Post');
+const Vote = require('../models/Vote');
 
 // Generate cookie strings for authorized requests
 const adminTokenCookie = `token=${generateUserToken('test1', true)}`;
@@ -82,6 +83,7 @@ async function createTestObjects() {
   const album1 = await Album.create(33170, 1884, 'Green Day', 'Dookie', 'https://img.discogs.com/_aD_ZCgjICJ9ilW_hdav_yk1tSo=/fit-in/600x600/filters:strip_icc():format(jpeg):mode_rgb():quality(90)/discogs-images/R-2103788-1507814667-9558.jpeg.jpg');
   const post1 = await Post.create(club1.id, album1.discogsId, user1.username, 'Test Track', 'Check this out');
   const post2 = await Post.create(club2.id, album1.discogsId, user2.username, 'Test Track', 'Check this out');
+  const vote1 = await Vote.create(post2.id, user2.username, true);
   return {
     user1,
     user2,
@@ -91,7 +93,8 @@ async function createTestObjects() {
     userClub2,
     album1,
     post1,
-    post2
+    post2,
+    vote1
   }
 }
 

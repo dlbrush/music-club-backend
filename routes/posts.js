@@ -59,7 +59,7 @@ router.post('/:postId/vote/:type', ensureLoggedIn, async function(req, res, next
     } else if (type === 'down') {
       liked = false
     } else {
-      throw new BadRequestError('Vote type must be up or down, case insensitive.')
+      throw new BadRequestError('Vote type must be up or down (case insensitive).')
     }
 
     // Check that requesting user is in club where post was made

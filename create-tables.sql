@@ -49,7 +49,7 @@ CREATE TABLE posts (
 
 CREATE TABLE votes (
   post_id INTEGER NOT NULL REFERENCES posts ON DELETE CASCADE,
-  username TEXT REFERENCES users ON DELETE SET NULL,
+  username TEXT REFERENCES users ON DELETE CASCADE,
   liked BOOLEAN NOT NULL,
   PRIMARY KEY (post_id, username)
 );
