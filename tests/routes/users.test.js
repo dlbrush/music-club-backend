@@ -143,497 +143,497 @@ describe('users routes', () => {
     });
   });
 
-    describe('POST /register', () => {
-      let testRegisterBody;
+  describe('POST /register', () => {
+    let testRegisterBody;
 
-      beforeEach(() => {
-        testRegisterBody = {
-          username: 'test3',
-          password: 'test3',
-          email: 'test3@test.com',
-          profileImgUrl: 'https://test.com/3.jpg'
-        }
-      });
+    beforeEach(() => {
+      testRegisterBody = {
+        username: 'test3',
+        password: 'test3',
+        email: 'test3@test.com',
+        profileImgUrl: 'https://test.com/3.jpg'
+      }
+    });
 
-      it('Returns new user on successful post', async () => {
-        const response = await request(app)
-                               .post('/users/register')
-                               .send(testRegisterBody);
-        expect(response.status).toEqual(201);
-        expect(response.body).toEqual({
-          newUser: {
-            username: testRegisterBody.username,
-            email: testRegisterBody.email,
-            profileImgUrl: testRegisterBody.profileImgUrl,
-            admin: false
-          }
-        });
-      });
-
-      it('Attaches token as HTTPOnly cookie on successful post', async () => {
-        const response = await request(app)
-          .post('/users/register')
-          .send(testRegisterBody);
-        expect(response.headers['set-cookie'][0]).toContain('token');
-        expect(response.headers['set-cookie'][0]).toContain('HttpOnly');
-      });
-
-      it('Creates user in database', async () => {
-        const response = await request(app)
-                               .post('/users/register')
-                               .send(testRegisterBody);
-        const user = await User.get(testRegisterBody.username);
-        expect(user).toEqual({
+    it('Returns new user on successful post', async () => {
+      const response = await request(app)
+                              .post('/users/register')
+                              .send(testRegisterBody);
+      expect(response.status).toEqual(201);
+      expect(response.body).toEqual({
+        newUser: {
           username: testRegisterBody.username,
           email: testRegisterBody.email,
           profileImgUrl: testRegisterBody.profileImgUrl,
           admin: false
-        });
-      });
-
-      it('Returns error if email does not match email format', async () => {
-        testRegisterBody.email = 'notAnEmail';
-        const response = await request(app)
-                               .post('/users/register')
-                               .send(testRegisterBody);
-        expect(response.status).toEqual(400);
-        expect(response.body).toEqual({
-          error: {
-            message: expect.any(String),
-            status: 400
-          }
-        });
-      });
-
-      it('Returns error if profile URL does not match image format', async () => {
-        testRegisterBody.profileImgUrl = 'notAnEmail';
-        const response = await request(app)
-                               .post('/users/register')
-                               .send(testRegisterBody);
-        expect(response.status).toEqual(400);
-        expect(response.body).toEqual({
-          error: {
-            message: expect.any(String),
-            status: 400
-          }
-        });
-      });
-
-      it('Returns error if required field is missing', async () => {
-        delete testRegisterBody.username;
-        const response = await request(app)
-                               .post('/users/register')
-                               .send(testRegisterBody);
-        expect(response.status).toEqual(400);
-        expect(response.body).toEqual({
-          error: {
-            message: expect.any(String),
-            status: 400
-          }
-        });
-      });
-
-      it('Returns error if passed extra properties', async () => {
-        testRegisterBody.extra = 'abc';
-        const response = await request(app)
-                               .post('/users/register')
-                               .send(testRegisterBody);
-        expect(response.status).toEqual(400);
-        expect(response.body).toEqual({
-          error: {
-            message: expect.any(String),
-            status: 400
-          }
-        });
-      });
-
-      it('Returns error if username and email are already in use', async () => {
-        testRegisterBody.username = user1.username;
-        testRegisterBody.email = user1.email;
-        const response = await request(app)
-                               .post('/users/register')
-                               .send(testRegisterBody);
-        expect(response.status).toEqual(400);
-        expect(response.body).toEqual({
-          error: {
-            message: 'User with username test1 and email test1@test.com already exists.',
-            status: 400
-          }
-        });
+        }
       });
     });
 
-    describe('POST /login', () => {
-      let testRegisterBody;
+    it('Attaches token as HTTPOnly cookie on successful post', async () => {
+      const response = await request(app)
+        .post('/users/register')
+        .send(testRegisterBody);
+      expect(response.headers['set-cookie'][0]).toContain('token');
+      expect(response.headers['set-cookie'][0]).toContain('HttpOnly');
+    });
 
-      beforeEach(async () => {
-        testRegisterBody = {
-          username: 'test3',
-          password: 'test3',
-          email: 'test3@test.com',
-          profileImgUrl: 'https://test.com/3.jpg'
-        }
-        // Register a user to hash a valid password
-        await request(app)
-              .post('/users/register')
-              .send(testRegisterBody);
-      });
-
-      it('Returns success message with valid login', async () => {
-        const response = await request(app)
-                               .post('/users/login')
-                               .send({
-                                 username: testRegisterBody.username,
-                                 password: testRegisterBody.password
-                               });
-        expect(response.status).toEqual(200);
-        expect(response.body).toEqual({
-          message: `Successfully logged in user ${testRegisterBody.username}.`
-        });
-      });
-
-      it('Attaches an HTTPOnly cookie with token', async () => {
-        const response = await request(app)
-                               .post('/users/login')
-                               .send({
-                                 username: testRegisterBody.username,
-                                 password: testRegisterBody.password
-                               });
-        expect(response.headers['set-cookie'][0]).toContain('token');
-        expect(response.headers['set-cookie'][0]).toContain('HttpOnly');
-      });
-
-      it('Returns 401 error with invalid username', async () => {
-        const response = await request(app)
-                               .post('/users/login')
-                               .send({
-                                 username: 'abc',
-                                 password: testRegisterBody.password
-                               });
-        expect(response.status).toEqual(401);
-        expect(response.body).toEqual({
-          error: {
-            status: 401,
-            message: 'Invalid username or password.'
-          }
-        })
-      });
-
-      it('Returns 401 error with invalid password', async () => {
-        const response = await request(app)
-                               .post('/users/login')
-                               .send({
-                                 username: testRegisterBody.username,
-                                 password: 'abc'
-                               });
-        expect(response.status).toEqual(401);
-        expect(response.body).toEqual({
-          error: {
-            status: 401,
-            message: 'Invalid username or password.'
-          }
-        })
+    it('Creates user in database', async () => {
+      const response = await request(app)
+                              .post('/users/register')
+                              .send(testRegisterBody);
+      const user = await User.get(testRegisterBody.username);
+      expect(user).toEqual({
+        username: testRegisterBody.username,
+        email: testRegisterBody.email,
+        profileImgUrl: testRegisterBody.profileImgUrl,
+        admin: false
       });
     });
 
-    describe('POST /', () => {
-      let testCreateBody;
-
-      beforeEach(() => {
-        testCreateBody = {
-          username: 'test3',
-          password: 'test3',
-          email: 'test3@test.com',
-          profileImgUrl: 'https://test.com/3.jpg',
-          admin: true
+    it('Returns error if email does not match email format', async () => {
+      testRegisterBody.email = 'notAnEmail';
+      const response = await request(app)
+                              .post('/users/register')
+                              .send(testRegisterBody);
+      expect(response.status).toEqual(400);
+      expect(response.body).toEqual({
+        error: {
+          message: expect.any(String),
+          status: 400
         }
       });
+    });
 
-      it('Returns new user on successful post', async () => {
-        const response = await request(app)
-                               .post('/users')
-                               .send(testCreateBody);
-        expect(response.status).toEqual(201);
-        expect(response.body).toEqual({
-          newUser: {
-            username: testCreateBody.username,
-            email: testCreateBody.email,
-            profileImgUrl: testCreateBody.profileImgUrl,
-            admin: testCreateBody.admin
-          }
-        });
+    it('Returns error if profile URL does not match image format', async () => {
+      testRegisterBody.profileImgUrl = 'notAnEmail';
+      const response = await request(app)
+                              .post('/users/register')
+                              .send(testRegisterBody);
+      expect(response.status).toEqual(400);
+      expect(response.body).toEqual({
+        error: {
+          message: expect.any(String),
+          status: 400
+        }
       });
+    });
 
-      it('Returns default values if profileImgUrl and admin are not defined in request', async () => {
-        delete testCreateBody.profileImgUrl;
-        delete testCreateBody.admin;
-        const response = await request(app)
-                               .post('/users')
-                               .send(testCreateBody);
-        expect(response.status).toEqual(201);
-        expect(response.body).toEqual({
-          newUser: {
-            username: testCreateBody.username,
-            email: testCreateBody.email,
-            profileImgUrl: DEFAULT_PROFILE_IMG,
-            admin: false
-          }
-        });
+    it('Returns error if required field is missing', async () => {
+      delete testRegisterBody.username;
+      const response = await request(app)
+                              .post('/users/register')
+                              .send(testRegisterBody);
+      expect(response.status).toEqual(400);
+      expect(response.body).toEqual({
+        error: {
+          message: expect.any(String),
+          status: 400
+        }
+      });
+    });
+
+    it('Returns error if passed extra properties', async () => {
+      testRegisterBody.extra = 'abc';
+      const response = await request(app)
+                              .post('/users/register')
+                              .send(testRegisterBody);
+      expect(response.status).toEqual(400);
+      expect(response.body).toEqual({
+        error: {
+          message: expect.any(String),
+          status: 400
+        }
+      });
+    });
+
+    it('Returns error if username and email are already in use', async () => {
+      testRegisterBody.username = user1.username;
+      testRegisterBody.email = user1.email;
+      const response = await request(app)
+                              .post('/users/register')
+                              .send(testRegisterBody);
+      expect(response.status).toEqual(400);
+      expect(response.body).toEqual({
+        error: {
+          message: 'User with username test1 and email test1@test.com already exists.',
+          status: 400
+        }
+      });
+    });
+  });
+
+  describe('POST /login', () => {
+    let testRegisterBody;
+
+    beforeEach(async () => {
+      testRegisterBody = {
+        username: 'test3',
+        password: 'test3',
+        email: 'test3@test.com',
+        profileImgUrl: 'https://test.com/3.jpg'
+      }
+      // Register a user to hash a valid password
+      await request(app)
+            .post('/users/register')
+            .send(testRegisterBody);
+    });
+
+    it('Returns success message with valid login', async () => {
+      const response = await request(app)
+                              .post('/users/login')
+                              .send({
+                                username: testRegisterBody.username,
+                                password: testRegisterBody.password
+                              });
+      expect(response.status).toEqual(200);
+      expect(response.body).toEqual({
+        message: `Successfully logged in user ${testRegisterBody.username}.`
+      });
+    });
+
+    it('Attaches an HTTPOnly cookie with token', async () => {
+      const response = await request(app)
+                              .post('/users/login')
+                              .send({
+                                username: testRegisterBody.username,
+                                password: testRegisterBody.password
+                              });
+      expect(response.headers['set-cookie'][0]).toContain('token');
+      expect(response.headers['set-cookie'][0]).toContain('HttpOnly');
+    });
+
+    it('Returns 401 error with invalid username', async () => {
+      const response = await request(app)
+                              .post('/users/login')
+                              .send({
+                                username: 'abc',
+                                password: testRegisterBody.password
+                              });
+      expect(response.status).toEqual(401);
+      expect(response.body).toEqual({
+        error: {
+          status: 401,
+          message: 'Invalid username or password.'
+        }
       })
-
-      it('Returns error if email does not match email format', async () => {
-        testCreateBody.email = 'notAnEmail';
-        const response = await request(app)
-                               .post('/users')
-                               .send(testCreateBody);
-        expect(response.status).toEqual(400);
-        expect(response.body).toEqual({
-          error: {
-            message: expect.any(String),
-            status: 400
-          }
-        });
-      });
-
-      it('Returns error if profile URL does not match image format', async () => {
-        testCreateBody.profileImgUrl = 'notAnEmail';
-        const response = await request(app)
-                               .post('/users')
-                               .send(testCreateBody);
-        expect(response.status).toEqual(400);
-        expect(response.body).toEqual({
-          error: {
-            message: expect.any(String),
-            status: 400
-          }
-        });
-      });
-
-      it('Returns error if required field is missing', async () => {
-        delete testCreateBody.username;
-        const response = await request(app)
-                               .post('/users')
-                               .send(testCreateBody);
-        expect(response.status).toEqual(400);
-        expect(response.body).toEqual({
-          error: {
-            message: expect.any(String),
-            status: 400
-          }
-        });
-      });
-
-      it('Returns error if admin is not boolean', async () => {
-        testCreateBody.admin = 'abc';
-        const response = await request(app)
-                               .post('/users')
-                               .send(testCreateBody);
-        expect(response.status).toEqual(400);
-        expect(response.body).toEqual({
-          error: {
-            message: expect.any(String),
-            status: 400
-          }
-        });
-      });
-
-      it('Returns error if passed extra properties', async () => {
-        testCreateBody.extra = 'abc';
-        const response = await request(app)
-                               .post('/users/register')
-                               .send(testCreateBody);
-        expect(response.status).toEqual(400);
-        expect(response.body).toEqual({
-          error: {
-            message: expect.any(String),
-            status: 400
-          }
-        });
-      });
-
-      it('Returns error if username and password are already in use', async () => {
-        testCreateBody.username = user1.username;
-        testCreateBody.email = user1.email;
-        const response = await request(app)
-                               .post('/users')
-                               .send(testCreateBody);
-        expect(response.status).toEqual(400);
-        expect(response.body).toEqual({
-          error: {
-            message: 'User with username test1 and email test1@test.com already exists.',
-            status: 400
-          }
-        });
-      });
     });
 
-    describe('POST /:username/join-club/:clubId', () => {
-      it('Returns message on success', async () => {
-        const response = await request(app)
-                               .post(`/users/${user1.username}/join-club/${club2.id}`);
-        expect(response.status).toEqual(201);
-        expect(response.body).toEqual({
-          message: `User ${user1.username} has successfully joined club ${club2.name} (ID: ${club2.id})`
-        });
-      });
+    it('Returns 401 error with invalid password', async () => {
+      const response = await request(app)
+                              .post('/users/login')
+                              .send({
+                                username: testRegisterBody.username,
+                                password: 'abc'
+                              });
+      expect(response.status).toEqual(401);
+      expect(response.body).toEqual({
+        error: {
+          status: 401,
+          message: 'Invalid username or password.'
+        }
+      })
+    });
+  });
 
-      it('Adds UserClub to database on success', async () => {
-        const response = await request(app)
-                               .post(`/users/${user1.username}/join-club/${club2.id}`);
-        const userClub = await UserClub.get(user1.username, club2.id);
-        expect(userClub).toEqual({
-          username: user1.username,
-          clubId: club2.id
-        });
-      });
+  describe('POST /', () => {
+    let testCreateBody;
 
-      it('Adds UserClub to database on success', async () => {
-        const response = await request(app)
-                               .post(`/users/${user1.username}/join-club/${club2.id}`);
-        const userClub = await UserClub.get(user1.username, club2.id);
-        expect(userClub).toEqual({
-          username: user1.username,
-          clubId: club2.id
-        });
-      });
-
-      it('Returns an error if clubId is not an integer', async () => {
-        const response = await request(app)
-                               .post(`/users/${user1.username}/join-club/abc`);
-        expect(response.status).toEqual(400);
-        expect(response.body).toEqual({
-          error: {
-            message: 'Club ID must be an integer.',
-            status: 400
-          }
-        });
-      });
-
-      it('Returns an error if the user is already a member of that club', async () => {
-        const response = await request(app)
-                               .post(`/users/${user1.username}/join-club/${club1.id}`);
-        expect(response.status).toEqual(400);
-        expect(response.body).toEqual({
-          error: {
-            message: `User ${user1.username} is already in club ${club1.name} (ID: ${club1.id})`,
-            status: 400
-          }
-        });
-      });
+    beforeEach(() => {
+      testCreateBody = {
+        username: 'test3',
+        password: 'test3',
+        email: 'test3@test.com',
+        profileImgUrl: 'https://test.com/3.jpg',
+        admin: true
+      }
     });
 
-    describe('PATCH /:username', () => {
-
-      let updateUserBody;
-
-      beforeEach(() => {
-        updateUserBody = {
-          email: 'update@test.com',
-          profileImgUrl: 'https://test.com/new.jpg'
+    it('Returns new user on successful post', async () => {
+      const response = await request(app)
+                              .post('/users')
+                              .send(testCreateBody);
+      expect(response.status).toEqual(201);
+      expect(response.body).toEqual({
+        newUser: {
+          username: testCreateBody.username,
+          email: testCreateBody.email,
+          profileImgUrl: testCreateBody.profileImgUrl,
+          admin: testCreateBody.admin
         }
       });
+    });
 
-      it('Responds with message and updated user on success', async () => {
-        const response = await request(app)
-                               .patch(`/users/${user1.username}`)
-                               .send(updateUserBody);
-        expect(response.status).toEqual(200);
-        expect(response.body).toEqual({
-          message: `Updated user ${user1.username}.`,
-          user: {
-            username: user1.username,
-            email: updateUserBody.email,
-            admin: user1.admin,
-            profileImgUrl: updateUserBody.profileImgUrl
-          }
-        });
+    it('Returns default values if profileImgUrl and admin are not defined in request', async () => {
+      delete testCreateBody.profileImgUrl;
+      delete testCreateBody.admin;
+      const response = await request(app)
+                              .post('/users')
+                              .send(testCreateBody);
+      expect(response.status).toEqual(201);
+      expect(response.body).toEqual({
+        newUser: {
+          username: testCreateBody.username,
+          email: testCreateBody.email,
+          profileImgUrl: DEFAULT_PROFILE_IMG,
+          admin: false
+        }
       });
+    })
 
-      it('Updates user in the DB', async () => {
-        const response = await request(app)
-                               .patch(`/users/${user1.username}`)
-                               .send(updateUserBody);
-        const user = await User.get(user1.username);
-        expect(user).toEqual({
+    it('Returns error if email does not match email format', async () => {
+      testCreateBody.email = 'notAnEmail';
+      const response = await request(app)
+                              .post('/users')
+                              .send(testCreateBody);
+      expect(response.status).toEqual(400);
+      expect(response.body).toEqual({
+        error: {
+          message: expect.any(String),
+          status: 400
+        }
+      });
+    });
+
+    it('Returns error if profile URL does not match image format', async () => {
+      testCreateBody.profileImgUrl = 'notAnEmail';
+      const response = await request(app)
+                              .post('/users')
+                              .send(testCreateBody);
+      expect(response.status).toEqual(400);
+      expect(response.body).toEqual({
+        error: {
+          message: expect.any(String),
+          status: 400
+        }
+      });
+    });
+
+    it('Returns error if required field is missing', async () => {
+      delete testCreateBody.username;
+      const response = await request(app)
+                              .post('/users')
+                              .send(testCreateBody);
+      expect(response.status).toEqual(400);
+      expect(response.body).toEqual({
+        error: {
+          message: expect.any(String),
+          status: 400
+        }
+      });
+    });
+
+    it('Returns error if admin is not boolean', async () => {
+      testCreateBody.admin = 'abc';
+      const response = await request(app)
+                              .post('/users')
+                              .send(testCreateBody);
+      expect(response.status).toEqual(400);
+      expect(response.body).toEqual({
+        error: {
+          message: expect.any(String),
+          status: 400
+        }
+      });
+    });
+
+    it('Returns error if passed extra properties', async () => {
+      testCreateBody.extra = 'abc';
+      const response = await request(app)
+                              .post('/users/register')
+                              .send(testCreateBody);
+      expect(response.status).toEqual(400);
+      expect(response.body).toEqual({
+        error: {
+          message: expect.any(String),
+          status: 400
+        }
+      });
+    });
+
+    it('Returns error if username and password are already in use', async () => {
+      testCreateBody.username = user1.username;
+      testCreateBody.email = user1.email;
+      const response = await request(app)
+                              .post('/users')
+                              .send(testCreateBody);
+      expect(response.status).toEqual(400);
+      expect(response.body).toEqual({
+        error: {
+          message: 'User with username test1 and email test1@test.com already exists.',
+          status: 400
+        }
+      });
+    });
+  });
+
+  describe('POST /:username/join-club/:clubId', () => {
+    it('Returns message on success', async () => {
+      const response = await request(app)
+                              .post(`/users/${user1.username}/join-club/${club2.id}`);
+      expect(response.status).toEqual(201);
+      expect(response.body).toEqual({
+        message: `User ${user1.username} has successfully joined club ${club2.name} (ID: ${club2.id})`
+      });
+    });
+
+    it('Adds UserClub to database on success', async () => {
+      const response = await request(app)
+                              .post(`/users/${user1.username}/join-club/${club2.id}`);
+      const userClub = await UserClub.get(user1.username, club2.id);
+      expect(userClub).toEqual({
+        username: user1.username,
+        clubId: club2.id
+      });
+    });
+
+    it('Adds UserClub to database on success', async () => {
+      const response = await request(app)
+                              .post(`/users/${user1.username}/join-club/${club2.id}`);
+      const userClub = await UserClub.get(user1.username, club2.id);
+      expect(userClub).toEqual({
+        username: user1.username,
+        clubId: club2.id
+      });
+    });
+
+    it('Returns an error if clubId is not an integer', async () => {
+      const response = await request(app)
+                              .post(`/users/${user1.username}/join-club/abc`);
+      expect(response.status).toEqual(400);
+      expect(response.body).toEqual({
+        error: {
+          message: 'Club ID must be an integer.',
+          status: 400
+        }
+      });
+    });
+
+    it('Returns an error if the user is already a member of that club', async () => {
+      const response = await request(app)
+                              .post(`/users/${user1.username}/join-club/${club1.id}`);
+      expect(response.status).toEqual(400);
+      expect(response.body).toEqual({
+        error: {
+          message: `User ${user1.username} is already in club ${club1.name} (ID: ${club1.id})`,
+          status: 400
+        }
+      });
+    });
+  });
+
+  describe('PATCH /:username', () => {
+
+    let updateUserBody;
+
+    beforeEach(() => {
+      updateUserBody = {
+        email: 'update@test.com',
+        profileImgUrl: 'https://test.com/new.jpg'
+      }
+    });
+
+    it('Responds with message and updated user on success', async () => {
+      const response = await request(app)
+                              .patch(`/users/${user1.username}`)
+                              .send(updateUserBody);
+      expect(response.status).toEqual(200);
+      expect(response.body).toEqual({
+        message: `Updated user ${user1.username}.`,
+        user: {
           username: user1.username,
           email: updateUserBody.email,
           admin: user1.admin,
           profileImgUrl: updateUserBody.profileImgUrl
-        });
-      });
-
-      it('Returns error if email not correctly formatted', async () => {
-        updateUserBody.email = 'notAnEmail';
-        const response = await request(app)
-                               .patch(`/users/${user1.username}`)
-                               .send(updateUserBody);
-        expect(response.status).toEqual(400);
-        expect(response.body).toEqual({
-          error: {
-            status: 400,
-            message: expect.any(String)
-          }
-        });
-      });
-
-      it('Returns error if img URL not correctly formatted', async () => {
-        updateUserBody.profileImgUrl = 'notAnUrl';
-        const response = await request(app)
-                               .patch(`/users/${user1.username}`)
-                               .send(updateUserBody);
-        expect(response.status).toEqual(400);
-        expect(response.body).toEqual({
-          error: {
-            status: 400,
-            message: expect.any(String)
-          }
-        });
-      });
-
-      it('Returns 404 if nonexistent user', async () => {
-        const response = await request(app)
-                               .patch('/users/abc')
-                               .send(updateUserBody);
-        expect(response.status).toEqual(404);
-        expect(response.body).toEqual({
-          error: {
-            status: 404,
-            message: 'User abc not found.'
-          }
-        });
+        }
       });
     });
 
-    describe('DELETE /:username', () => {
-
-      it('Returns message on success', async () => {
-        const response = await request(app)
-                               .delete(`/users/${user1.username}`);
-        expect(response.status).toEqual(200);
-        expect(response.body).toEqual({
-          message: `Deleted user ${user1.username}.`
-        });
-      });
-
-      it('Deletes user from DB on success', async () => {
-        const response = await request(app)
-                               .delete(`/users/${user1.username}`);
-        const user = await User.get(user1.username);
-        expect(user).toEqual(undefined);
-      });
-
-      it('Returns 404 if nonexistent user', async () => {
-        const response = await request(app)
-                               .delete('/users/abc');
-        expect(response.status).toEqual(404);
-        expect(response.body).toEqual({
-          error: {
-            status: 404,
-            message: 'User abc not found.'
-          }
-        });
+    it('Updates user in the DB', async () => {
+      const response = await request(app)
+                              .patch(`/users/${user1.username}`)
+                              .send(updateUserBody);
+      const user = await User.get(user1.username);
+      expect(user).toEqual({
+        username: user1.username,
+        email: updateUserBody.email,
+        admin: user1.admin,
+        profileImgUrl: updateUserBody.profileImgUrl
       });
     });
+
+    it('Returns error if email not correctly formatted', async () => {
+      updateUserBody.email = 'notAnEmail';
+      const response = await request(app)
+                              .patch(`/users/${user1.username}`)
+                              .send(updateUserBody);
+      expect(response.status).toEqual(400);
+      expect(response.body).toEqual({
+        error: {
+          status: 400,
+          message: expect.any(String)
+        }
+      });
+    });
+
+    it('Returns error if img URL not correctly formatted', async () => {
+      updateUserBody.profileImgUrl = 'notAnUrl';
+      const response = await request(app)
+                              .patch(`/users/${user1.username}`)
+                              .send(updateUserBody);
+      expect(response.status).toEqual(400);
+      expect(response.body).toEqual({
+        error: {
+          status: 400,
+          message: expect.any(String)
+        }
+      });
+    });
+
+    it('Returns 404 if nonexistent user', async () => {
+      const response = await request(app)
+                              .patch('/users/abc')
+                              .send(updateUserBody);
+      expect(response.status).toEqual(404);
+      expect(response.body).toEqual({
+        error: {
+          status: 404,
+          message: 'User abc not found.'
+        }
+      });
+    });
+  });
+
+  describe('DELETE /:username', () => {
+
+    it('Returns message on success', async () => {
+      const response = await request(app)
+                              .delete(`/users/${user1.username}`);
+      expect(response.status).toEqual(200);
+      expect(response.body).toEqual({
+        message: `Deleted user ${user1.username}.`
+      });
+    });
+
+    it('Deletes user from DB on success', async () => {
+      const response = await request(app)
+                              .delete(`/users/${user1.username}`);
+      const user = await User.get(user1.username);
+      expect(user).toEqual(undefined);
+    });
+
+    it('Returns 404 if nonexistent user', async () => {
+      const response = await request(app)
+                              .delete('/users/abc');
+      expect(response.status).toEqual(404);
+      expect(response.body).toEqual({
+        error: {
+          status: 404,
+          message: 'User abc not found.'
+        }
+      });
+    });
+  });
 
   afterAll(async () => {
     await db.end();

@@ -79,13 +79,15 @@ async function createTestObjects() {
   const club2 = await Club.create('testClub2', 'testing club 2', 'test2', false, 'http://test.com/2.jpg');
   const userClub1 = await UserClub.create('test1', club1.id);
   const userClub2 = await UserClub.create('test2', club2.id);
+  const album1 = await Album.create(33170, 1884, 'Green Day', 'Dookie', 'https://img.discogs.com/_aD_ZCgjICJ9ilW_hdav_yk1tSo=/fit-in/600x600/filters:strip_icc():format(jpeg):mode_rgb():quality(90)/discogs-images/R-2103788-1507814667-9558.jpeg.jpg');
   return {
     user1,
     user2,
     club1,
     club2,
     userClub1,
-    userClub2
+    userClub2,
+    album1
   }
 }
 
