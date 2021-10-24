@@ -17,8 +17,8 @@ class Post {
     this.discogsId = discogsId;
     this.postedAt = postedAt;
     this.postedBy = postedBy;
-    if (content) this.content = content;
-    if (recTracks) this.recTracks = recTracks;
+    this.content = content;
+    this.recTracks = recTracks;
   }
 
   // Static methods

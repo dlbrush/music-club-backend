@@ -50,12 +50,14 @@ async function seedDb() {
   const album1 = new Album(albumData.discogsId, albumData.year, albumData.artist, albumData.title, albumData.coverImgUrl);
 
   const postResult = await db.query(`
-    INSERT INTO posts (club_id, content, discogs_id, posted_by, rec_tracks)
-    VALUES ($1, 'Check this out', $2, $3, 'Test track')
+    INSERT INTO posts (club_id, content, discogs_id, posted_by, posted_at, rec_tracks)
+    VALUES ($1, 'Check this out', $2, $3, current_timestamp, 'Test track'), ($4, 'Check this out', $5, $6, current_timestamp, 'Test track')
     RETURNING id, club_id AS "clubId", content, discogs_id AS "discogsId", posted_at AS "postedAt", posted_by AS "postedBy", rec_tracks AS "recTracks"
-  `, [club1.id, album1.discogsId, user1.username]);
-  const postData = postResult.rows[0];
-  const post1 = new Post(postData.id, postData.clubId, postData.discogsId, new Date(postData.postedAt), postData.postedBy, postData.content, postData.recTracks);
+  `, [club1.id, album1.discogsId, user1.username, club2.id, album1.discogsId, user2.username]);
+  const post1Data = postResult.rows[0];
+  const post2Data = postResult.rows[1];
+  const post1 = new Post(post1Data.id, post1Data.clubId, post1Data.discogsId, new Date(post1Data.postedAt), post1Data.postedBy, post1Data.content, post1Data.recTracks);
+  const post2 = new Post(post2Data.id, post2Data.clubId, post2Data.discogsId, new Date(post2Data.postedAt), post2Data.postedBy, post2Data.content, post2Data.recTracks);
   
   return {
     club1,
@@ -65,7 +67,8 @@ async function seedDb() {
     userClub1,
     userClub2,
     album1,
-    post1
+    post1,
+    post2
   }
 }
 

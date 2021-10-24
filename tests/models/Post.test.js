@@ -4,16 +4,15 @@ const { seedDb, clearDb } = require('../setup.js');
 
 describe('Post model', () => {
   // Declare test items
-  let album1;
-  let post1;
+  let user1, club1, album1, post1, post2;
 
   beforeEach(async () => {
     const items = await seedDb();
-    album1 = items.album1
-  });
-
-  afterEach(async () => {
-    await clearDb();
+    user1 = items.user1;
+    club1 = items.club1;
+    album1 = items.album1;
+    post1 = items.post1;
+    post2 = items.post2;
   });
 
   afterEach(async () => {
@@ -21,174 +20,172 @@ describe('Post model', () => {
   });
 
   describe('#getAll', () => {
-    it('Returns all clubs with expected properties when no arguments passed', async () => {
-      const clubs = await Club.getAll();
-      expect(clubs.length).toEqual(2);
-      expect(clubs[0]).toEqual({
-        id: club1.id,
-        name: club1.name,
-        description: club1.description,
-        founder: club1.founder,
-        isPublic: club1.isPublic
+    it('Returns all posts with expected properties when no arguments passed', async () => {
+      const posts = await Post.getAll();
+      expect(posts.length).toEqual(2);
+      expect(posts[0]).toEqual({
+        id: post1.id,
+        clubId: post1.clubId,
+        discogsId: post1.discogsId,
+        postedBy: post1.postedBy,
+        postedAt: post1.postedAt,
+        content: post1.content
       });
-      expect(clubs[1]).toEqual({
-        id: club2.id,
-        name: club2.name,
-        description: club2.description,
-        founder: club2.founder,
-        isPublic: club2.isPublic
-      });
-    });
-
-    it('Returns only users matching passed name', async () => {
-      const clubs = await Club.getAll(undefined, '2');
-      expect(clubs.length).toEqual(1);
-      expect(clubs[0]).toEqual({
-        id: club2.id,
-        name: club2.name,
-        description: club2.description,
-        founder: club2.founder,
-        isPublic: club2.isPublic
+      expect(posts[1]).toEqual({
+        id: post2.id,
+        clubId: post2.clubId,
+        discogsId: post2.discogsId,
+        postedBy: post2.postedBy,
+        postedAt: post2.postedAt,
+        content: post2.content
       });
     });
 
-    it('Returns only public clubs if first parameter is true', async () => {
-      const clubs = await Club.getAll(true);
-      expect(clubs.length).toEqual(1);
-      expect(clubs[0]).toEqual({
-        id: club1.id,
-        name: club1.name,
-        description: club1.description,
-        founder: club1.founder,
-        isPublic: club1.isPublic
+    it('Returns only posts made in passed club ID', async () => {
+      const posts = await Post.getAll(club1.id);
+      expect(posts.length).toEqual(1);
+      expect(posts[0]).toEqual({
+        id: post1.id,
+        clubId: post1.clubId,
+        discogsId: post1.discogsId,
+        postedBy: post1.postedBy,
+        postedAt: post1.postedAt,
+        content: post1.content
       });
     });
 
     it('Returns empty array if no matches to filters', async () => {
-      const clubs = await Club.getAll(true, '2');
-      expect(clubs).toEqual([]);
+      const posts = await Post.getAll(9999);
+      expect(posts).toEqual([]);
     });
   });
 
   describe('#get', () => {
-    it('Returns club matching passed id', async () => {
-      const club = await Club.get(club1.id);
-      expect(club).toEqual({
-        id: club1.id,
-        name: club1.name,
-        description: club1.description,
-        founder: club1.founder,
-        isPublic: club1.isPublic,
-        founded: club1.founded,
-        bannerImgUrl: club1.bannerImgUrl
+    it('Returns post matching passed id', async () => {
+      const post = await Post.get(post1.id);
+      expect(post).toEqual({
+        id: post1.id,
+        clubId: post1.clubId,
+        discogsId: post1.discogsId,
+        postedBy: post1.postedBy,
+        postedAt: post1.postedAt,
+        content: post1.content,
+        recTracks: post1.recTracks
       });
     });
 
-    it('Returns undefined if no club with that ID', async () => {
-      const club = await Club.get(9999);
-      expect(club).toEqual(undefined);
+    it('Returns undefined if no post with that ID', async () => {
+      const post = await Post.get(9999);
+      expect(post).toEqual(undefined);
     });
   });
 
   describe('#create', () => {
-    it('Returns club with all passed attributes', async () => {
-      const club = await Club.create('testClub3', 'testing club 3', user1, true, 'https://clubtest.com/a.jpg');
-      expect(club).toEqual({
+    it('Returns post with all passed attributes', async () => {
+      const post = await Post.create(club1.id, album1.discogsId, user1.username, 'All of them', 'This is great');
+      expect(post).toEqual({
         id: expect.any(Number),
-        name: 'testClub3',
-        description: 'testing club 3',
-        founder: 'test1',
-        isPublic: true,
-        founded: expect.any(Date),
-        bannerImgUrl: 'https://clubtest.com/a.jpg'
+        clubId: club1.id,
+        discogsId: album1.discogsId,
+        postedAt: expect.any(Date),
+        postedBy: user1.username,
+        content: 'This is great',
+        recTracks: 'All of them'
       });
     });
 
-    it('Adds club to database', async () => {
-      const club = await Club.create('testClub3', 'testing club 3', user1, true, 'https://clubtest.com/a.jpg');
-      const dbClub = await Club.get(club.id);
-      expect(dbClub).toEqual({
-        id: expect.any(Number),
-        name: 'testClub3',
-        description: 'testing club 3',
-        founder: 'test1',
-        isPublic: true,
-        founded: expect.any(Date),
-        bannerImgUrl: 'https://clubtest.com/a.jpg'
-      })
+    it('Adds post to database', async () => {
+      const post = await Post.create(club1.id, album1.discogsId, user1.username, 'All of them', 'This is great');
+      const dbPost = await Post.get(post.id);
+      expect(dbPost).toEqual({
+        id: post.id,
+        clubId: post.clubId,
+        discogsId: post.discogsId,
+        postedAt: post.postedAt,
+        postedBy: post.postedBy,
+        content: post.content,
+        recTracks: post.recTracks
+      });
     });
 
-    it('Returns a club with default banner if banner not passed', async () => {
-      const club = await Club.create('testClub3', 'testing club 3', user1, true);
-      expect(club.bannerImgUrl).toEqual(DEFAULT_BANNER_IMG);
+    it('Returns empty strings for content and recTracks if not passed', async () => {
+      const post = await Post.create(club1.id, album1.discogsId, user1.username);
+      expect(post).toEqual({
+        id: expect.any(Number),
+        clubId: club1.id,
+        discogsId: album1.discogsId,
+        postedAt: expect.any(Date),
+        postedBy: user1.username,
+        content: '',
+        recTracks: ''
+      });
     });
   });
 
   describe('#delete', () => {
     it('Returns success message on success', async () => {
-      const msg = await club1.delete();
-      expect(msg).toEqual(`Deleted club ${club1.name}. (ID: ${club1.id})`);
+      const msg = await post1.delete();
+      expect(msg).toEqual(`Deleted post ${post1.id}.`);
     });
 
     it('Removes user from DB', async () => {
-      await club1.delete();
-      const club = await Club.get(club1.id);
-      expect(club).toEqual(undefined);
+      await post1.delete();
+      const post = await Post.get(post1.id);
+      expect(post).toEqual(undefined);
     });
 
-    it('Throws error if club object does not match club in DB', async () => {
+    it('Throws error if post object does not match post in DB', async () => {
       try {
-        const badClub = new Club(9999);
-        await badClub.delete();
+        const badPost = new Post(9999);
+        await badPost.delete();
       } catch(e) {
-        expect(e.message).toEqual(`No club deleted. (ID: ${club1.id})`);
+        expect(e.message).toEqual(`Unable to delete post 9999.`);
       }
     });
   });
 
   describe('#save', () => {
     it('Returns success message on success', async () => {
-      const msg = await club1.save();
-      expect(msg).toEqual(`Updated club ${club1.name}. (ID: ${club1.id})`);
+      const msg = await post1.save();
+      expect(msg).toEqual(`Updated post ${post1.id}.`);
     });
 
-    it('Updates club in DB when changes are made', async () => {
-      club1.name = 'New club';
-      club1.description = 'Come on in'
-      club1.bannerImgUrl = 'http://google.com/new.jpg';
-      await club1.save();
-      const club = await Club.get(club1.id);
-      expect(club).toEqual({
-        id: club1.id,
-        name: club1.name,
-        description: club1.description,
-        founder: club1.founder,
-        isPublic: club1.isPublic,
-        founded: club1.founded,
-        bannerImgUrl: club1.bannerImgUrl
+    it('Updates post in DB when changes are made', async () => {
+      post1.content = 'This one actually is bad';
+      post1.recTracks = 'None';
+      await post1.save();
+      const post = await Post.get(post1.id);
+      expect(post).toEqual({
+        id: post1.id,
+        clubId: post1.clubId,
+        discogsId: post1.discogsId,
+        postedBy: post1.postedBy,
+        postedAt: post1.postedAt,
+        content: post1.content,
+        recTracks: post1.recTracks
       });
     });
 
     it('Makes no changes otherwise', async () => {
-      await club1.save();
-      const club = await Club.get(club1.id);
-      expect(club).toEqual({
-        id: club1.id,
-        name: club1.name,
-        description: club1.description,
-        founder: club1.founder,
-        isPublic: club1.isPublic,
-        founded: club1.founded,
-        bannerImgUrl: club1.bannerImgUrl
+      await post1.save();
+      const post = await Post.get(post1.id);
+      expect(post).toEqual({
+        id: post1.id,
+        clubId: post1.clubId,
+        discogsId: post1.discogsId,
+        postedBy: post1.postedBy,
+        postedAt: post1.postedAt,
+        content: post1.content,
+        recTracks: post1.recTracks
       });
     });
 
-    it('Throws error if club object does not match club in DB', async () => {
+    it('Throws error if post object does not match club in DB', async () => {
       try {
-        const badClub = new Club(9999, 'bad');
-        await badClub.save();
+        const badPost = new Post(9999);
+        await badPost.save();
       } catch(e) {
-        expect(e.message).toEqual(`Unable to update club ${badClub.name}. (ID: ${badClub.id})`);
+        expect(e.message).toEqual(`Unable to update post 9999.`);
       }
     });
   });
