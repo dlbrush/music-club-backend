@@ -9,7 +9,8 @@
   "properties": {
       "name": {
           "type": "string",
-          "description": "Name of the club"
+          "description": "Name of the club",
+          "maxLength": 30
       },
       "description": {
           "type": "string",
@@ -17,7 +18,8 @@
       },
       "founder": {
           "type": "string",
-          "description": "Username of the founder of the club"
+          "description": "Username of the founder of the club",
+          "maxLength": 30
       },
       "bannerImgUrl": {
           "type": "string",

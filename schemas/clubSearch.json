@@ -4,7 +4,8 @@
   "properties": {
       "name": {
           "type": "string",
-          "description": "The name of a club"
+          "description": "The name of a club",
+          "maxLength": 30
       },
       "isPublic": {
           "type": "boolean",
