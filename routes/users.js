@@ -30,50 +30,6 @@ router.get('/:username', ensureAdminOrSameUser, async function (req, res, next) 
   } catch (e) {
     return next(e)
   }
-})
-
-router.post('/register', async function (req, res, next) {
-  try {
-    validateRequest(req.body, newUserSchema);
-
-    const { username, password, email, profileImgUrl } = req.body;
-
-    // Check that there is no existing user that would violate the unique constraints on username or email
-    try {
-      await User.checkExisting(username, email);
-    } catch (e) {
-      throw new BadRequestError(e.message);
-    }
-
-    // Register user and receive JWT with username and admin status
-    const { newUser, token } = await User.register(username, password, email, profileImgUrl);
-
-    res.cookie('token', token, {maxAge: AUTH_DURATION, httpOnly: true});
-    return res.status(201).json({ newUser });
-  } catch (e) {
-    return next(e);
-  }
-});
-
-router.post('/login', async function (req, res, next) {
-  try {
-    const { username, password } = req.body;
-    let message;
-    let token;
-
-    try {
-      const authenticated = await User.authenticate(username, password);
-      message = authenticated.message;
-      token = authenticated.token;
-    } catch(e) {
-      throw new UnauthenticatedError(e.message);
-    }
-
-    res.cookie('token', token, {maxAge: AUTH_DURATION, httpOnly: true});
-    res.json({ message });
-  } catch(e) {
-    next(e)
-  }
 });
 
 router.post('/', async function (req, res, next) {

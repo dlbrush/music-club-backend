@@ -3,6 +3,7 @@ const morgan = require('morgan');
 const cookieParser = require('cookie-parser');
 
 const userRoutes = require('./routes/users');
+const authRoutes = require('./routes/auth');
 const clubRoutes = require('./routes/clubs');
 const postRoutes = require('./routes/posts');
 const { authenticateToken } = require('./middleware/auth');
@@ -19,6 +20,7 @@ app.use(authenticateToken);
 
 // Routes
 app.use('/users', userRoutes);
+app.use('/auth', authRoutes);
 app.use('/clubs', clubRoutes);
 app.use('/posts', postRoutes);
 

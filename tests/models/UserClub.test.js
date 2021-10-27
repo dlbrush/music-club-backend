@@ -99,7 +99,6 @@ describe('UserClub model', () => {
 
   describe('#delete', () => {
     it('Returns success message on success', async () => {
-      console.log(userClub1);
       const msg = await userClub1.delete();
       expect(msg).toEqual(`Deleted user ${userClub1.username} from club ${userClub1.clubId}`);
     });
