@@ -41,13 +41,11 @@ router.post('/register', async function (req, res, next) {
 router.post('/login', async function (req, res, next) {
   try {
     const { username, password } = req.body;
-    let message;
     let token;
     let user;
 
     try {
       const authenticated = await User.authenticate(username, password);
-      message = authenticated.message;
       token = authenticated.token;
       user = authenticated.user
     } catch(e) {
