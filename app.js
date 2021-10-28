@@ -1,6 +1,7 @@
 const express = require('express');
 const morgan = require('morgan');
 const cookieParser = require('cookie-parser');
+const cors = require("cors");
 
 const userRoutes = require('./routes/users');
 const authRoutes = require('./routes/auth');
@@ -11,6 +12,7 @@ const { authenticateToken } = require('./middleware/auth');
 const app = express();
 
 // Setup
+app.use(cors());
 app.use(express.json());
 app.use(cookieParser());
 app.use(morgan('tiny'));
