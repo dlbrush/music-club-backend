@@ -41,10 +41,8 @@ describe('auth routes', () => {
                               .send(testRegisterBody);
       expect(response.status).toEqual(201);
       expect(response.body).toEqual({
-        newUser: {
+        user: {
           username: testRegisterBody.username,
-          email: testRegisterBody.email,
-          profileImgUrl: testRegisterBody.profileImgUrl,
           admin: false
         }
       });
@@ -155,11 +153,11 @@ describe('auth routes', () => {
       }
       // Register a user to hash a valid password
       await request(app)
-            .post('/users/register')
+            .post('/auth/register')
             .send(testRegisterBody);
     });
 
-    it('Returns success message with valid login', async () => {
+    it('Returns success message and user data with valid login', async () => {
       const response = await request(app)
                               .post('/auth/login')
                               .send({
@@ -168,7 +166,10 @@ describe('auth routes', () => {
                               });
       expect(response.status).toEqual(200);
       expect(response.body).toEqual({
-        message: `Successfully logged in user ${testRegisterBody.username}.`
+        user: {
+          username: testRegisterBody.username,
+          admin: false
+        }
       });
     });
 

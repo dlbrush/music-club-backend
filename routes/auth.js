@@ -1,13 +1,12 @@
 const express = require('express');
 
-const { BadRequestError, NotFoundError, UnauthenticatedError } = require('../helpers/errors');
+const { BadRequestError, UnauthenticatedError } = require('../helpers/errors');
 const User = require('../models/User');
-const MembershipService = require('../services/MembershipService');
 const { validateRequest } = require('../helpers/validation');
 const newUserSchema = require('../schemas/newUser.json');
 const updateUserSchema = require('../schemas/updateUser.json');
 const { AUTH_DURATION } = require('../config');
-const { ensureAdmin, ensureLoggedIn, ensureAdminOrSameUser } = require('../middleware/auth');
+const { ensureLoggedIn } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -28,7 +27,12 @@ router.post('/register', async function (req, res, next) {
     const { newUser, token } = await User.register(username, password, email, profileImgUrl);
 
     res.cookie('token', token, {maxAge: AUTH_DURATION, httpOnly: true});
-    return res.status(201).json({ newUser });
+    return res.status(201).json({ 
+      user: {
+        username: newUser.username,
+        admin: newUser.admin
+      }
+    });
   } catch (e) {
     return next(e);
   }
@@ -39,29 +43,35 @@ router.post('/login', async function (req, res, next) {
     const { username, password } = req.body;
     let message;
     let token;
+    let user;
 
     try {
       const authenticated = await User.authenticate(username, password);
       message = authenticated.message;
       token = authenticated.token;
+      user = authenticated.user
     } catch(e) {
       throw new UnauthenticatedError(e.message);
     }
 
     res.cookie('token', token, {maxAge: AUTH_DURATION, httpOnly: true});
-    res.json({ message });
+    res.json({ 
+      user: {
+        username: user.username,
+        admin: user.admin
+      }
+    });
   } catch(e) {
     next(e)
   }
 });
 
-// Check cookie in browser and return success if cookie passes middleware
-router.post('/check', ensureLoggedIn, async function (req, res, next) {
-  try {
-    res.json({ message: 'User is logged in.' });
-  } catch(e) {
-    next(e)
+// Check cookie in browser and return user data if successful
+router.post('/check', async function (req, res, next) {
+  if (req.user) {
+    res.json({ user: req.user });
   }
+  next(new UnauthenticatedError('JWT not found'));
 });
 
 module.exports = router;

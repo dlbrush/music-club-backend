@@ -206,11 +206,15 @@ describe('User model', () => {
       user = await User.create('test3', 'test3', 'test3@test.com', 'http://test.com/3.jpg', true);
     });
 
-    it('Returns success message and token with valid username and password', async () => {
+    it('Returns success message, token, and user data with valid username and password', async () => {
       const auth = await User.authenticate(user.username, 'test3');
       expect(auth).toEqual({
         message: `Successfully logged in user ${user.username}.`,
-        token: expect.any(String)
+        token: expect.any(String),
+        user: {
+          username: 'test3',
+          admin: true
+        }
       })
     });
 

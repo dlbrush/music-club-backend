@@ -146,7 +146,11 @@ class User {
       if (isValid) {
         return {
           message: `Successfully logged in user ${username}.`,
-          token
+          token,
+          user: {
+            username: user.username,
+            admin: user.admin
+          }
         }
       }
     }

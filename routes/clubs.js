@@ -1,18 +1,18 @@
 const express = require('express');
 
 const { BadRequestError, NotFoundError, UnauthorizedError } = require('../helpers/errors');
-const { validateRequest } = require('../helpers/validation');
 const User = require('../models/User');
 const Club = require('../models/Club');
+const Album = require('../models/Album');
+const DiscogsService = require('../services/DiscogsService');
+const Post = require('../models/Post');
+const MembershipService = require('../services/MembershipService');
 const newClubSchema = require('../schemas/newClub.json');
 const clubSearchSchema = require('../schemas/clubSearch.json');
 const updateClubSchema = require('../schemas/updateClub.json');
 const newPostSchema = require('../schemas/newPost.json');
-const MembershipService = require('../services/MembershipService');
+const { validateRequest } = require('../helpers/validation');
 const { ensureLoggedIn } = require('../middleware/auth');
-const Album = require('../models/Album');
-const DiscogsService = require('../services/DiscogsService');
-const Post = require('../models/Post');
 
 const router = new express.Router();
 

@@ -247,7 +247,7 @@ describe('users routes', () => {
     it('Returns error if passed extra properties', async () => {
       testCreateBody.extra = 'abc';
       const response = await request(app)
-                              .post('/users/register')
+                              .post('/users')
                               .send(testCreateBody);
       expect(response.status).toEqual(400);
       expect(response.body).toEqual({

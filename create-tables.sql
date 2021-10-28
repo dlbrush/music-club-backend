@@ -1,7 +1,7 @@
 CREATE TABLE users (
   username VARCHAR(30) PRIMARY KEY,
-  password VARCHAR(30) NOT NULL,
-  email VA NOT NULL UNIQUE,
+  password VARCHAR(60) NOT NULL,
+  email VARCHAR(320) NOT NULL UNIQUE,
   admin BOOLEAN NOT NULL,
   profile_img_url TEXT NOT NULL DEFAULT 'https://upload.wikimedia.org/wikipedia/commons/b/b6/12in-Vinyl-LP-Record-Angle.jpg'
 );
