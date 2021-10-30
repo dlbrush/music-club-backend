@@ -8,6 +8,8 @@ const newUserSchema = require('../schemas/newUser.json');
 const updateUserSchema = require('../schemas/updateUser.json');
 const { AUTH_DURATION } = require('../config');
 const { ensureAdmin, ensureLoggedIn, ensureAdminOrSameUser } = require('../middleware/auth');
+const UserClub = require('../models/UserClub');
+const Club = require('../models/Club');
 
 const router = new express.Router();
 
@@ -26,8 +28,13 @@ router.get('/:username', ensureAdminOrSameUser, async function (req, res, next) 
     if (!user) {
       throw new NotFoundError(`User ${req.params.username} not found.`);
     }
+    const userClubs = await UserClub.getAll(user.username);
+    const userClubIds = userClubs.map(userClub => userClub.clubId);
+    const clubs = await Club.getSome(userClubIds);
+    user.clubs = clubs;
     return res.json({ user });
   } catch (e) {
+    console.log(e);
     return next(e)
   }
 });
