@@ -2,6 +2,7 @@ require('dotenv').config();
 
 // Server config
 const PORT = 3000;
+const FRONTEND_URI = process.env.FRONTEND_URI;
 
 // Authentication
 const SECRET_KEY = process.env.SECRET_KEY || 'not_a_secret';
@@ -26,6 +27,7 @@ const DISCOGS_ACCESS_TOKEN = process.env.DISCOGS_ACCESS_TOKEN;
 
 module.exports = {
   PORT,
+  FRONTEND_URI,
   SECRET_KEY,
   BCRYPT_WORK_FACTOR,
   getDatabaseUri,

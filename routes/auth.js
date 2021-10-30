@@ -68,8 +68,9 @@ router.post('/login', async function (req, res, next) {
 router.post('/check', async function (req, res, next) {
   if (req.user) {
     res.json({ user: req.user });
+  } else {
+    next(new UnauthenticatedError('JWT not found'));
   }
-  next(new UnauthenticatedError('JWT not found'));
 });
 
 module.exports = router;

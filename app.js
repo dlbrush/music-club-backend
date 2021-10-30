@@ -3,6 +3,8 @@ const morgan = require('morgan');
 const cookieParser = require('cookie-parser');
 const cors = require("cors");
 
+const { FRONTEND_URI } = require('./config');
+
 const userRoutes = require('./routes/users');
 const authRoutes = require('./routes/auth');
 const clubRoutes = require('./routes/clubs');
@@ -11,14 +13,29 @@ const { authenticateToken } = require('./middleware/auth');
 
 const app = express();
 
+const corsOptions = {
+  origin: FRONTEND_URI,
+  optionsSuccessStatus: 200,
+  credentials: true
+}
+
 // Setup
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser());
 app.use(morgan('tiny'));
 
 // Authentication
 app.use(authenticateToken);
+
+app.options('*', function (req, res, next) {
+  res.set({
+    'Access-Control-Allow-Origin':  FRONTEND_URI,
+    'Access-Control-Allow-Methods': 'POST, GET, PATCH, DELETE',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+  });
+  res.json({message: 'success'});
+});
 
 // Routes
 app.use('/users', userRoutes);
