@@ -96,7 +96,16 @@ describe('users routes', () => {
           username: user2.username,
           email: user2.email,
           admin: user2.admin,
-          profileImgUrl: user2.profileImgUrl
+          profileImgUrl: user2.profileImgUrl,
+          clubs: [
+            {
+              id: club2.id,
+              name: club2.name,
+              description: club2.description,
+              founder: club2.founder,
+              isPublic: club2.isPublic
+            }
+          ]
         }
       });
     });
@@ -111,7 +120,16 @@ describe('users routes', () => {
           username: user2.username,
           email: user2.email,
           admin: user2.admin,
-          profileImgUrl: user2.profileImgUrl
+          profileImgUrl: user2.profileImgUrl,
+          clubs: [
+            {
+              id: club2.id,
+              name: club2.name,
+              description: club2.description,
+              founder: club2.founder,
+              isPublic: club2.isPublic
+            }
+          ]
         }
       });
     });

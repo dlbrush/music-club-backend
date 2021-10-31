@@ -1,6 +1,5 @@
 const db = require('../db');
-const { handleClubFilters } = require('../helpers/sql');
-const MembershipService = require('../services/MembershipService');
+const { handleClubFilters, createParamList } = require('../helpers/sql');
 const User = require('./User');
 
 class Club {
@@ -47,6 +46,26 @@ class Club {
       ${filters.string}
       ORDER BY id ASC
     `, filters.parameters);
+
+    return result.rows.map(club => {
+      return new Club(club.id, club.name, club.description, club.founder, club.is_public)
+    })
+  }
+
+  /**
+   * Return clubs matching passed IDs
+   * @param {number[]} clubIds 
+   * @returns {Club[]}
+   */
+   static async getSome(clubIds) {
+    const whereClause = createParamList(clubIds, 'id');
+
+    const result = await db.query(`
+      SELECT id, name, description, founder, is_public
+      FROM clubs
+      ${whereClause}
+      ORDER BY id ASC
+    `, clubIds);
 
     return result.rows.map(club => {
       return new Club(club.id, club.name, club.description, club.founder, club.is_public)
