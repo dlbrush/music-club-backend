@@ -23,7 +23,7 @@
       "profileImgUrl": {
           "type": "string",
           "description": "URL to access the user's profile image at. Should be jpg, png, or gif, and accessible via http.",
-          "pattern": "^https*://.+(.jpg|.jpeg|.png|.gif)"
+          "pattern": "^https*://.+/.+(.jpg|.jpeg|.png|.gif)"
       },
       "admin": {
           "type": "boolean",

@@ -4,9 +4,7 @@ const { BadRequestError, UnauthenticatedError } = require('../helpers/errors');
 const User = require('../models/User');
 const { validateRequest } = require('../helpers/validation');
 const newUserSchema = require('../schemas/newUser.json');
-const updateUserSchema = require('../schemas/updateUser.json');
 const { AUTH_DURATION } = require('../config');
-const { ensureLoggedIn } = require('../middleware/auth');
 
 const router = express.Router();
 

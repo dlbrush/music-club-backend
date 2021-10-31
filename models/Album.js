@@ -1,4 +1,5 @@
 const db = require('../db');
+const { createParamList } = require('../helpers/sql');
 
 class Album {
   constructor(discogsId, year, artist, title, coverImgUrl) {
@@ -20,6 +21,18 @@ class Album {
       return new Album(album.discogsId, album.year, album.artist, album.title, album.coverImgUrl);
     }
     // Returns undefined if nothing is found
+  }
+
+  static async getSome(discogsIds) {
+    const whereClause = createParamList(discogsId, 'discogs_id');
+    const result = await db.query(`
+      SELECT discogs_id AS "discogsId", year, artist, title, cover_img_url AS "coverImgUrl"
+      FROM albums
+      ${whereClause}
+    `, discogsIds);
+    return result.rows.map(album => {
+      return new Album(album.discogsId, album.year, album.artist, album.title, album.coverImgUrl);
+    })
   }
 
   static async create(discogsId, year, artist, title, coverImgUrl) {

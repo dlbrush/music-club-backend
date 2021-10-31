@@ -7,6 +7,7 @@ const VoteService = require('../services/VoteService');
 const { validateRequest } = require('../helpers/validation');
 const { ensureLoggedIn } = require('../middleware/auth');
 const updatePostSchema = require('../schemas/updatePost.json');
+const Album = require('../models/Album');
 
 const router = new express.Router();
 
@@ -16,6 +17,16 @@ router.get('/', async function(req, res, next) {
   try {
     const clubId = req.query['clubId'];
     const posts = await Post.getAll(clubId);
+    const albumIds = posts.map(post => post.discogsId);
+    const albums = await Album.getSome(albumIds);
+    const albumMap = {};
+    for (const album of albums) {
+      const { discogsId, year, artist, title, coverImgUrl } = album;
+      albumMap[discogsId] = {year, artist, title, coverImgUrl};
+    }
+    for (const post of posts) {
+      post.album = albumMap[post.discogsId];
+    }
     res.json({ posts });
   } catch (e) {
     next(e);
