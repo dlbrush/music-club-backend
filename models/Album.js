@@ -24,7 +24,7 @@ class Album {
   }
 
   static async getSome(discogsIds) {
-    const whereClause = createParamList(discogsId, 'discogs_id');
+    const whereClause = createParamList(discogsIds, 'discogs_id');
     const result = await db.query(`
       SELECT discogs_id AS "discogsId", year, artist, title, cover_img_url AS "coverImgUrl"
       FROM albums

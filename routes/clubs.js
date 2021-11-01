@@ -13,6 +13,7 @@ const updateClubSchema = require('../schemas/updateClub.json');
 const newPostSchema = require('../schemas/newPost.json');
 const { validateRequest } = require('../helpers/validation');
 const { ensureLoggedIn } = require('../middleware/auth');
+const UserClub = require('../models/UserClub');
 
 const router = new express.Router();
 
@@ -47,6 +48,11 @@ router.get('/:clubId', async function(req, res, next) {
     if (!club) {
       throw new NotFoundError(`Club with ID ${clubId} not found.`);
     }
+    // List members based on UserClub records
+    const userClubs = await UserClub.getAll('', clubId);
+    const memberNames = userClubs.map(userClub => userClub.username);
+    const members = await User.getSome(memberNames);
+    club.members = members;
     return res.json({ club })
   } catch(e) {
     return next(e);
