@@ -71,4 +71,15 @@ router.post('/check', async function (req, res, next) {
   }
 });
 
+router.post('/logout', async function (req, res, next) {
+  try {
+    res.clearCookie('token');
+    res.json({ 
+      message: 'Successfully logged out.'
+    });
+  } catch(e) {
+    next(e)
+  }
+});
+
 module.exports = router;

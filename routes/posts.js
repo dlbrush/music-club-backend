@@ -8,6 +8,7 @@ const { validateRequest } = require('../helpers/validation');
 const { ensureLoggedIn } = require('../middleware/auth');
 const updatePostSchema = require('../schemas/updatePost.json');
 const Album = require('../models/Album');
+const AlbumGenre = require('../models/AlbumGenre');
 
 const router = new express.Router();
 
@@ -43,6 +44,13 @@ router.get('/:postId', async function(req, res, next) {
     if (!post) {
       throw new NotFoundError(`Post with ID ${postId} not found.`);
     }
+
+    const album = await Album.get(post.discogsId);
+    post.album = album;
+
+    const albumGenres = await AlbumGenre.getForAlbum(album.discogsId);
+    post.album.genres = albumGenres.map(albumGenre => albumGenre.genre);
+    
     res.json({ post });
   } catch (e) {
     next(e);

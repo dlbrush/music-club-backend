@@ -35,8 +35,6 @@ class DiscogsService {
       // Add album to DB
       const newAlbum = await Album.create(discogsId, year, artistString, title, primaryImgUrl);
 
-      console.log("It wasn't the album");
-
       // Create genre objects for each attached genre
       const genreObjects = await AlbumGenre.createMany(discogsId, genres);
       return { newAlbum, genreObjects };

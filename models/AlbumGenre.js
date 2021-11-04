@@ -7,6 +7,17 @@ class AlbumGenre {
     this.genre = genre;
   }
 
+  static async getForAlbum(discogsId) {
+    const result = await db.query(`
+      SELECT discogs_id AS "discogsId", genre
+      FROM albums_genres
+      WHERE discogs_id=$1
+    `, [discogsId]);
+    return result.rows.map(albumGenre => {
+      return new AlbumGenre(albumGenre.discogsId, albumGenre.genre);
+    });
+  }
+
   static async create(discogsId, genre) {
     const result = await db.query(`
       INSERT INTO albums_genres (discogs_id, genre)
@@ -23,7 +34,6 @@ class AlbumGenre {
    * @param {string[]} genres 
    */
   static async createMany(discogsId, genres) {
-    console.log(genres);
     const valuesList = makeGenreValuesList(genres);
     const result = await db.query(`
       INSERT INTO albums_genres (discogs_id, genre)
