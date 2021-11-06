@@ -2,13 +2,16 @@ const express = require('express');
 
 const { NotFoundError, BadRequestError, UnauthorizedError } = require('../helpers/errors');
 const Post = require('../models/Post');
+const Album = require('../models/Album');
+const AlbumGenre = require('../models/AlbumGenre');
+const User = require('../models/User');
+const UserClub = require('../models/UserClub');
+const Comment = require('../models/Comment');
 const MembershipService = require('../services/MembershipService');
 const VoteService = require('../services/VoteService');
 const { validateRequest } = require('../helpers/validation');
 const { ensureLoggedIn } = require('../middleware/auth');
 const updatePostSchema = require('../schemas/updatePost.json');
-const Album = require('../models/Album');
-const AlbumGenre = require('../models/AlbumGenre');
 
 const router = new express.Router();
 
@@ -57,6 +60,42 @@ router.get('/:postId', async function(req, res, next) {
   }
 });
 
+/**
+ * Deliver recent posts for all clubs the given user is a part of
+ */
+router.get('/recent/:username', async function(req, res, next) {
+  try {
+    // Check that user exists
+    const user = await User.get(req.params.username);
+    if (!user) {
+      throw new NotFoundError(`User ${req.params.username} not found.`);
+    }
+
+    // Get club IDs
+    const userClubs = await UserClub.getAll(user.username);
+    const userClubIds = userClubs.map(userClub => userClub.clubId);
+
+    // Get posts for user's clubs
+    const posts = await Post.getAllForClubs(userClubIds);
+    
+    // Get album data for posts
+    const albumIds = posts.map(post => post.discogsId);
+    const albums = await Album.getSome(albumIds);
+    const albumMap = {};
+    for (const album of albums) {
+      const { discogsId, year, artist, title, coverImgUrl } = album;
+      albumMap[discogsId] = {year, artist, title, coverImgUrl};
+    }
+    for (const post of posts) {
+      post.album = albumMap[post.discogsId];
+    }
+
+    res.json({ posts });
+  } catch (e) {
+    next(e);
+  }
+});
+
 // Create a vote on a post or update an existing vote. Type parameter can be 'up' or 'down'.
 router.post('/:postId/vote/:type', ensureLoggedIn, async function(req, res, next) {
   try {
@@ -91,6 +130,34 @@ router.post('/:postId/vote/:type', ensureLoggedIn, async function(req, res, next
     const message = await VoteService.handleVote(postId, req.user.username, liked);
 
     res.json({ message });
+  } catch (e) {
+    next(e);
+  }
+});
+
+router.post('/:postId/new-comment', ensureLoggedIn, async function(req, res, next) {
+  try {
+    // Ensure post exists
+    const post = await Post.get(req.params.postId);
+    if (!post) {
+      throw new NotFoundError(`No post with id ${req.params.postId}`);
+    }
+
+    // Check that requesting user is in club where post was made
+    const isMember = await MembershipService.checkMembership(req.user.username, post.clubId);
+    if (!isMember) {
+      throw new UnauthorizedError(`Sorry, you must be a member of club with ID ${post.clubId} to vote on post ${postId}`);
+    }
+
+    // Finally, make new comment
+    const newComment = await Comment.create(req.user.username, req.body.comment, post.id);
+
+    // Get user info and attach it to comment
+    const { username, profileImgUrl } = await User.get(req.user.username);
+
+    newComment.user = { username, profileImgUrl };
+
+    res.status(201).json({ newComment });
   } catch (e) {
     next(e);
   }

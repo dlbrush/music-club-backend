@@ -1,5 +1,5 @@
 const db = require('../db');
-const { getOptionalPostColumns } = require('../helpers/sql');
+const { getOptionalPostColumns, createParamList } = require('../helpers/sql');
 
 class Post {
   /**
@@ -36,7 +36,26 @@ class Post {
 
     return result.rows.map(post => {
       return new Post(post.id, post.clubId, post.discogsId, new Date(post.postedAt), post.postedBy, post.content);
-    })
+    });
+  }
+
+  /**
+   * Get all posts for multiple clubs - used to show user recent posts from their clubs
+   * @param {number[]} clubIds 
+   */
+  static async getAllForClubs(clubIds) {
+    const filterString = createParamList(clubIds, 'club_id');
+
+    const result = await db.query(`
+      SELECT id, club_id AS "clubId", discogs_id AS "discogsId", posted_by as "postedBy", posted_at AS "postedAt", content
+      FROM posts
+      ${filterString}
+      ORDER BY posted_at ASC 
+    `, clubIds);
+
+    return result.rows.map(post => {
+      return new Post(post.id, post.clubId, post.discogsId, new Date(post.postedAt), post.postedBy, post.content);
+    });
   }
 
   static async get(id) {
