@@ -10,6 +10,7 @@ const authRoutes = require('./routes/auth');
 const clubRoutes = require('./routes/clubs');
 const postRoutes = require('./routes/posts');
 const albumRoutes = require('./routes/albums');
+const commentRoutes = require('./routes/comments');
 const { authenticateToken } = require('./middleware/auth');
 
 const app = express();
@@ -44,6 +45,7 @@ app.use('/auth', authRoutes);
 app.use('/clubs', clubRoutes);
 app.use('/posts', postRoutes);
 app.use('/albums', albumRoutes);
+app.use('/comments', commentRoutes);
 
 /** Generic error handler; anything unhandled goes here. */
 app.use(function (err, req, res, next) {

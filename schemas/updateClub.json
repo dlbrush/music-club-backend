@@ -4,7 +4,8 @@
   "properties": {
       "name": {
           "type": "string",
-          "description": "Name of the club"
+          "description": "Name of the club",
+          "maxLength": 30
       },
       "description": {
           "type": "string",

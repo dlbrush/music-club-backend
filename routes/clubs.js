@@ -5,6 +5,7 @@ const User = require('../models/User');
 const Club = require('../models/Club');
 const Album = require('../models/Album');
 const Post = require('../models/Post');
+const UserClub = require('../models/UserClub');
 const DiscogsService = require('../services/DiscogsService');
 const MembershipService = require('../services/MembershipService');
 const newClubSchema = require('../schemas/newClub.json');
@@ -13,7 +14,6 @@ const updateClubSchema = require('../schemas/updateClub.json');
 const newPostSchema = require('../schemas/newPost.json');
 const { validateRequest } = require('../helpers/validation');
 const { ensureLoggedIn } = require('../middleware/auth');
-const UserClub = require('../models/UserClub');
 
 const router = new express.Router();
 
@@ -61,6 +61,16 @@ router.get('/:clubId', async function(req, res, next) {
 
 router.post('/', async function(req, res, next) {
   try {
+    // Convert body.isPublic to boolean if possible
+    if (req.body.isPublic) {
+      if (req.body.isPublic.toLowerCase() === 'true') {
+        req.body.isPublic = true;
+      } else if (req.body.isPublic.toLowerCase() === 'false') {
+        req.body.isPublic = false;
+      }
+    }
+    // Remove bannerImgUrl prop if it's empty
+    if (req.body.bannerImgUrl === '') delete req.body.bannerImgUrl;
     validateRequest(req.body, newClubSchema);
 
     const { name, description, founder, isPublic, bannerImgUrl } = req.body;

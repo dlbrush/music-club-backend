@@ -48,6 +48,20 @@ router.get('/:postId', async function(req, res, next) {
       throw new NotFoundError(`Post with ID ${postId} not found.`);
     }
 
+    // Add comments, and add user data for each comment
+    const comments = await Comment.getAll(postId);
+    const commentUserSet = new Set();
+    comments.forEach(comment => commentUserSet.add(comment.username));
+    const commentUsers = await User.getSome(Array.from(commentUserSet));
+    const commentUserMap = {};
+    commentUsers.forEach(user => {
+      commentUserMap[user.username] = {
+        profileImgUrl: user.profileImgUrl
+      };
+    });
+    comments.forEach(comment => comment.user = commentUserMap[comment.username]);
+    post.comments = comments;
+
     const album = await Album.get(post.discogsId);
     post.album = album;
 

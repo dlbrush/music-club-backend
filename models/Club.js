@@ -64,7 +64,7 @@ class Club {
       SELECT id, name, description, founder, is_public
       FROM clubs
       ${whereClause}
-      ORDER BY id ASC
+      ORDER BY name ASC
     `, clubIds);
 
     return result.rows.map(club => {

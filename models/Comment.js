@@ -18,7 +18,7 @@ class Comment {
       SELECT id, username, comment, post_id AS "postId", posted_at AS "postedAt"
       FROM comments
       ${filterString}
-      SORT BY posted_at ASC
+      ORDER BY posted_at ASC
     `, params);
 
     return result.rows.map(comment => {
@@ -30,8 +30,8 @@ class Comment {
     const result = await db.query(`
       SELECT id, username, comment, post_id AS "postId", posted_at AS "postedAt"
       FROM comments
-      WHERE post_id=$1
-      SORT BY posted_at ASC
+      WHERE id=$1
+      ORDER BY posted_at ASC
     `, [id]);
 
     const comment = result.rows[0];
@@ -44,7 +44,7 @@ class Comment {
     const result = await db.query(`
       INSERT INTO comments (username, comment, post_id, posted_at)
       VALUES ($1, $2, $3, current_date)
-      RETURNING username, comment, post_id AS "postId", posted_at AS "postedAt"
+      RETURNING id, username, comment, post_id AS "postId", posted_at AS "postedAt"
     `, [username, comment, postId]);
     const newComment = result.rows[0];
     return new Comment(newComment.id, newComment.username, newComment.comment, newComment.postId, new Date(newComment.postedAt));

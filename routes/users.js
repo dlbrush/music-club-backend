@@ -34,7 +34,6 @@ router.get('/:username', ensureAdminOrSameUser, async function (req, res, next) 
     user.clubs = clubs;
     return res.json({ user });
   } catch (e) {
-    console.log(e);
     return next(e)
   }
 });
