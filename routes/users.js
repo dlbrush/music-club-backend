@@ -10,6 +10,7 @@ const { AUTH_DURATION } = require('../config');
 const { ensureAdmin, ensureLoggedIn, ensureAdminOrSameUser } = require('../middleware/auth');
 const UserClub = require('../models/UserClub');
 const Club = require('../models/Club');
+const Invitation = require('../models/Invitation');
 
 const router = new express.Router();
 
@@ -28,10 +29,28 @@ router.get('/:username', ensureAdminOrSameUser, async function (req, res, next) 
     if (!user) {
       throw new NotFoundError(`User ${req.params.username} not found.`);
     }
+
+    // Get IDs of clubs the user is in and invited to
     const userClubs = await UserClub.getAll(user.username);
     const userClubIds = userClubs.map(userClub => userClub.clubId);
-    const clubs = await Club.getSome(userClubIds);
-    user.clubs = clubs;
+    const userInvitations = await Invitation.getAll(user.username);
+    const invitationClubIds = userInvitations.map(invitation => invitation.clubId);
+
+    // Get club data and put in a map
+    const clubs = await Club.getSome(userClubIds.concat(invitationClubIds));
+    const clubIdMap = new Map();
+    for (let club of clubs) {
+      clubIdMap.set(club.id, club);
+    }
+
+    // Map club data for user club and invitations
+    user.clubs = userClubIds.map(id => clubIdMap.get(id));
+    for (const invitation of userInvitations) {
+      invitation.club = clubIdMap.get(invitation.clubId);
+    }
+
+    user.invitations = userInvitations;
+
     return res.json({ user });
   } catch (e) {
     return next(e)
@@ -73,6 +92,14 @@ router.post('/:username/join-club/:clubId', async function (req, res, next) {
     const { username } = req.params;
     // Then, attempt join
     const message = await MembershipService.join(username, clubId);
+
+    // Assuming successful join, find and delete any invitation sent to this user
+    const invitation = await Invitation.getAll(username, clubId);
+    if (invitation.length > 0) {
+      // There should only ever be one invitation matching both username and clubId
+      await invitation[0].delete();
+    }
+
     return res.status(201).json({ message });
   } catch (e) {
     next(e);

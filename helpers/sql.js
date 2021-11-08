@@ -40,6 +40,23 @@ function handleUserClubFilters(username, clubId) {
   return { parameters, string }
 }
 
+function handleInvitationFilters(username, clubId) {
+  let parameters = [];
+  let string = '';
+  let paramCount = 0;
+  if (clubId) {
+    paramCount++;
+    string += `${addWhereOrAnd(string)} club_id=$${paramCount}`;
+    parameters.push(clubId);
+  }
+  if (username) {
+    paramCount++;
+    string = `${addWhereOrAnd(string)} username=$${paramCount}`;
+    parameters.push(username);
+  }
+  return { parameters, string }
+}
+
 function handleVoteFilters(postId, username) {
   let parameters = [];
   let string = '';
@@ -111,6 +128,7 @@ module.exports = {
   handleUserFilters,
   handleClubFilters,
   handleUserClubFilters,
+  handleInvitationFilters,
   handleVoteFilters,
   createParamList,
   makeGenreValuesList,

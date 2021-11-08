@@ -6,6 +6,7 @@ const Club = require('../models/Club');
 const Album = require('../models/Album');
 const Post = require('../models/Post');
 const UserClub = require('../models/UserClub');
+const Invitation = require('../models/Invitation');
 const DiscogsService = require('../services/DiscogsService');
 const MembershipService = require('../services/MembershipService');
 const newClubSchema = require('../schemas/newClub.json');
@@ -53,11 +54,34 @@ router.get('/:clubId', async function(req, res, next) {
     const memberNames = userClubs.map(userClub => userClub.username);
     const members = await User.getSome(memberNames);
     club.members = members;
+
     return res.json({ club })
   } catch(e) {
     return next(e);
   }
 });
+
+// Get all invitations to a given club
+router.get('/:clubId/invitations', async function(req, res, next) {
+  try {
+    const clubId = parseInt(req.params.clubId);
+    if (!Number.isInteger(clubId)) {
+      throw new BadRequestError('Club ID must be an integer.')
+    }
+    const club = await Club.get(clubId);
+    if (!club) {
+      throw new NotFoundError(`Club with ID ${clubId} not found.`);
+    }
+
+    // Get invited users based on Invitation records
+    const invitations = await Invitation.getAll(undefined, clubId);
+
+    return res.json({ invitations })
+  } catch(e) {
+    return next(e);
+  }
+});
+
 
 router.post('/', async function(req, res, next) {
   try {

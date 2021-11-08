@@ -61,7 +61,7 @@ class Club {
     const whereClause = createParamList(clubIds, 'id');
 
     const result = await db.query(`
-      SELECT id, name, description, founder, is_public
+      SELECT id, name, description, founder, is_public, banner_img_url AS "bannerImgUrl"
       FROM clubs
       ${whereClause}
       ORDER BY name ASC

@@ -44,13 +44,16 @@ class Post {
    * @param {number[]} clubIds 
    */
   static async getAllForClubs(clubIds) {
+    // Return empty array if no club IDs passed - otherwise query will have no where clause and return all posts
+    if (!clubIds.length) return [];
+
     const filterString = createParamList(clubIds, 'club_id');
 
     const result = await db.query(`
       SELECT id, club_id AS "clubId", discogs_id AS "discogsId", posted_by as "postedBy", posted_at AS "postedAt", content
       FROM posts
       ${filterString}
-      ORDER BY posted_at ASC 
+      ORDER BY posted_at DESC 
     `, clubIds);
 
     return result.rows.map(post => {
