@@ -12,19 +12,17 @@ class Club {
    * @param {string} founder Username for User table
    * @param {boolean} isPublic
    * @param {string} bannerImgUrl
-   * @param {User[]} members
    * @returns {Club}
    */
-  constructor(id, name, description, founder, isPublic, founded, bannerImgUrl, members) {
+  constructor(id, name, description, founder, isPublic, bannerImgUrl, founded) {
     this.id = id;
     this.name = name;
     this.description = description;
     this.founder = founder;
     this.isPublic = isPublic;
     // Properties that may not always be passed
-    if (founded) this.founded = founded;
     if (bannerImgUrl) this.bannerImgUrl = bannerImgUrl;
-    if (members) this.members = members;
+    if (founded) this.founded = founded;
   }
 
   // Static methods
@@ -41,14 +39,14 @@ class Club {
     const filters = handleClubFilters(isPublic, name);
 
     const result = await db.query(`
-      SELECT id, name, description, founder, is_public
+      SELECT id, name, description, founder, is_public AS "isPublic", banner_img_url AS "bannerImgUrl"
       FROM clubs
       ${filters.string}
       ORDER BY id ASC
     `, filters.parameters);
 
     return result.rows.map(club => {
-      return new Club(club.id, club.name, club.description, club.founder, club.is_public)
+      return new Club(club.id, club.name, club.description, club.founder, club.isPublic, club.bannerImgUrl);
     })
   }
 
@@ -61,14 +59,14 @@ class Club {
     const whereClause = createParamList(clubIds, 'id');
 
     const result = await db.query(`
-      SELECT id, name, description, founder, is_public, banner_img_url AS "bannerImgUrl"
+      SELECT id, name, description, founder, is_public AS "isPublic", banner_img_url AS "bannerImgUrl"
       FROM clubs
       ${whereClause}
       ORDER BY name ASC
     `, clubIds);
 
     return result.rows.map(club => {
-      return new Club(club.id, club.name, club.description, club.founder, club.is_public)
+      return new Club(club.id, club.name, club.description, club.founder, club.isPublic, club.bannerImgUrl)
     })
   }
 
@@ -92,7 +90,7 @@ class Club {
     if (clubInfo) {
       // Get club members if there are any
       // const members = await MembershipService.getClubMembers(clubId);
-      return new Club(clubInfo.id, clubInfo.name, clubInfo.description, clubInfo.founder, clubInfo.isPublic, new Date(clubInfo.founded), clubInfo.bannerImgUrl);
+      return new Club(clubInfo.id, clubInfo.name, clubInfo.description, clubInfo.founder, clubInfo.isPublic, clubInfo.bannerImgUrl, new Date(clubInfo.founded));
     }
     // Returns undefined if no club found
   }
@@ -112,7 +110,7 @@ class Club {
     `, parameters);
 
     const newClub = result.rows[0];
-    return new Club(newClub.id, newClub.name, newClub.description, newClub.founder, newClub.isPublic, new Date(newClub.founded), newClub.bannerImgUrl);
+    return new Club(newClub.id, newClub.name, newClub.description, newClub.founder, newClub.isPublic, newClub.bannerImgUrl, new Date(newClub.founded));
   }
 
   // Instance methods

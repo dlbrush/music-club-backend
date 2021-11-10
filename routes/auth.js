@@ -73,12 +73,11 @@ router.post('/check', async function (req, res, next) {
 
 router.post('/logout', async function (req, res, next) {
   try {
-    // res.clearCookie('token', {maxAge: AUTH_DURATION, httpOnly: true});
-    res.cookie('token', '', {maxAge: AUTH_DURATION, httpOnly: true});
+    res.clearCookie('token', {maxAge: AUTH_DURATION, httpOnly: true});
+    // res.cookie('token', '', {maxAge: AUTH_DURATION, httpOnly: true});
     res.json({ 
       message: 'Successfully logged out.'
     });
-    res.end();
   } catch(e) {
     next(e);
   }

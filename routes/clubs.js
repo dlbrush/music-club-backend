@@ -177,7 +177,7 @@ router.patch('/:clubId', async function (req, res, next) {
     // Update the club object in the database
     const message = await club.save();
 
-    return res.json({message, club});
+    return res.json({ message, club });
   } catch(e) {
     next(e);
   }
