@@ -1,3 +1,5 @@
+const Post = require('../models/Post');
+
 async function checkPost(req, res, next) {
   try {
     const postId = parseInt(req.params.postId);

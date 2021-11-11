@@ -60,7 +60,7 @@ router.get('/:clubId', ensureLoggedIn, ensureAdminOrValidClub('params', 'clubId'
 });
 
 // Get all invitations to a given club
-router.get('/:clubId/invitations', ensureLoggedIn, ensureAdmin, async function(req, res, next) {
+router.get('/:clubId/invitations', ensureLoggedIn, ensureAdminOrValidClub('params', 'clubId', {allowPublic: true}), async function(req, res, next) {
   try {
     const clubId = parseInt(req.params.clubId);
     if (!Number.isInteger(clubId)) {

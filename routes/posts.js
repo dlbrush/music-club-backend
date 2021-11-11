@@ -42,8 +42,8 @@ router.get('/', ensureLoggedIn, ensureAdminOrValidClub('query', 'clubId', {allow
 router.get('/:postId', ensureLoggedIn, checkPost, ensureAdminOrValidClub('post', 'clubId', {allowPublic: true}), async function(req, res, next) {
   try {
     // Add comments, and add user data for each comment
-    const postId = req.post.id;
-    const comments = await Comment.getAll(postId);
+    const post = req.post
+    const comments = await Comment.getAll(post.id);
     const commentUserSet = new Set();
     comments.forEach(comment => commentUserSet.add(comment.username));
     const commentUsers = await User.getSome(Array.from(commentUserSet));

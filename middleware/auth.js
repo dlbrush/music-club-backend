@@ -1,9 +1,9 @@
-const { request } = require('express');
 const jwt = require('jsonwebtoken');
 
 const { SECRET_KEY } = require('../config');
 const { UnauthenticatedError, UnauthorizedError, NotFoundError } = require('../helpers/errors');
 const Club = require('../models/Club');
+const Post = require('../models/Post');
 const Comment = require('../models/Comment');
 const MembershipService = require('../services/MembershipService');
 

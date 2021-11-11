@@ -9,7 +9,6 @@ const MembershipService = require('../services/MembershipService');
 const { validateRequest } = require('../helpers/validation');
 const newUserSchema = require('../schemas/newUser.json');
 const updateUserSchema = require('../schemas/updateUser.json');
-const { AUTH_DURATION } = require('../config');
 const { ensureAdmin, ensureLoggedIn, ensureAdminOrSameUser } = require('../middleware/auth');
 
 const router = new express.Router();
