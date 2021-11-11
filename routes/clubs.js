@@ -14,11 +14,11 @@ const clubSearchSchema = require('../schemas/clubSearch.json');
 const updateClubSchema = require('../schemas/updateClub.json');
 const newPostSchema = require('../schemas/newPost.json');
 const { validateRequest } = require('../helpers/validation');
-const { ensureLoggedIn } = require('../middleware/auth');
+const { ensureLoggedIn, ensureAdmin, ensureAdminOrValidClub } = require('../middleware/auth');
 
 const router = new express.Router();
 
-router.get('/', async function(req, res, next) {
+router.get('/', ensureLoggedIn, async function(req, res, next) {
   try {
     // Convert isPublic query string to boolean if it matches boolean string
     if (req.query.isPublic !== undefined) {
@@ -27,6 +27,11 @@ router.get('/', async function(req, res, next) {
       } else if (req.query.isPublic.toLowerCase() === 'false') {
         req.query.isPublic = false;
       }
+    }
+
+    // Reject query for non-public clubs unless the user is an admin
+    if (req.query.isPublic !== true && req.user.admin !== true) {
+      throw new UnauthorizedError('Unauthorized: Only admin user can see all clubs. Add ?isPublic=true to get all public clubs.');
     }
 
     // Check that the query strings passed are valid
@@ -39,30 +44,23 @@ router.get('/', async function(req, res, next) {
   }
 });
 
-router.get('/:clubId', async function(req, res, next) {
+router.get('/:clubId', ensureLoggedIn, ensureAdminOrValidClub('params', 'clubId', {allowPublic: true}), async function(req, res, next) {
   try {
-    const clubId = parseInt(req.params.clubId);
-    if (!Number.isInteger(clubId)) {
-      throw new BadRequestError('Club ID must be an integer.')
-    }
-    const club = await Club.get(clubId);
-    if (!club) {
-      throw new NotFoundError(`Club with ID ${clubId} not found.`);
-    }
+    // Club will already be attached to req object from ensureAdminOrValidClub
     // List members based on UserClub records
-    const userClubs = await UserClub.getAll('', clubId);
+    const userClubs = await UserClub.getAll('', req.club.id);
     const memberNames = userClubs.map(userClub => userClub.username);
     const members = await User.getSome(memberNames);
-    club.members = members;
+    req.club.members = members;
 
-    return res.json({ club })
+    return res.json({ club: req.club })
   } catch(e) {
     return next(e);
   }
 });
 
 // Get all invitations to a given club
-router.get('/:clubId/invitations', async function(req, res, next) {
+router.get('/:clubId/invitations', ensureLoggedIn, ensureAdmin, async function(req, res, next) {
   try {
     const clubId = parseInt(req.params.clubId);
     if (!Number.isInteger(clubId)) {
@@ -83,7 +81,7 @@ router.get('/:clubId/invitations', async function(req, res, next) {
 });
 
 
-router.post('/', async function(req, res, next) {
+router.post('/', ensureLoggedIn, async function(req, res, next) {
   try {
     // Convert body.isPublic to boolean if possible
     if (req.body.isPublic) {
@@ -114,29 +112,13 @@ router.post('/', async function(req, res, next) {
   }
 });
 
-router.post('/:clubId/new-post', ensureLoggedIn, async function(req, res, next) {
+router.post('/:clubId/new-post', ensureLoggedIn, ensureAdminOrValidClub('params', 'clubId', {}), async function(req, res, next) {
   try {
-    // Check that club ID is integer and corresponds to real club
-    const clubId = parseInt(req.params.clubId);
-    if (!clubId) {
-      throw new BadRequestError('Club ID must be an integer.')
-    }
-    const club = await Club.get(clubId);
-    if (!club) {
-      throw new NotFoundError(`Club with ID ${clubId} not found.`);
-    }
-
     // Try to convert discogs ID to integer
     req.body.discogsId = parseInt(req.body.discogsId);
     validateRequest(req.body, newPostSchema);
 
     const { content, discogsId, recTracks } = req.body;
-
-    // Check that the logged in user is a member of the club they're trying to post to
-    const isMember = await MembershipService.checkMembership(req.user.username, clubId);
-    if (!isMember) {
-      throw new UnauthorizedError('Unauthorized: You are not a member of the club you are attempting to post to.');
-    }
 
     // Check that Discogs ID corresponds to existing album - if not, create album in DB with discogs data
     let album = await Album.get(discogsId);
@@ -146,28 +128,19 @@ router.post('/:clubId/new-post', ensureLoggedIn, async function(req, res, next) 
     }
 
     // Finally, create the post with all of the data we have confirmed
-    const newPost = await Post.create(clubId, discogsId, req.user.username, recTracks, content);
+    const newPost = await Post.create(req.club.id, discogsId, req.user.username, recTracks, content);
     return res.status(201).json({ newPost });
   } catch(e) {
     return next(e);
   }
 });
 
-router.patch('/:clubId', async function (req, res, next) {
+router.patch('/:clubId', ensureAdminOrValidClub('params', 'clubId', {founderOnly: true}), async function (req, res, next) {
   try {
-    const clubId = parseInt(req.params.clubId);
-    if (!clubId) {
-      throw new BadRequestError('Club ID must be an integer.')
-    }
-
-    const club = await Club.get(clubId);
-
-    if (!club) {
-      throw new NotFoundError(`Club with ID ${clubId} not found.`);
-    }
-
     // Validate request body
     validateRequest(req.body, updateClubSchema);
+
+    const club = req.club
 
     // Update properties on club object for each property passed in body
     for (let prop in req.body) {
@@ -183,20 +156,9 @@ router.patch('/:clubId', async function (req, res, next) {
   }
 });
 
-router.delete('/:clubId', async function (req, res, next) {
+router.delete('/:clubId', ensureAdminOrValidClub('params', 'clubId', {founderOnly: true}), async function (req, res, next) {
   try {
-    const clubId = parseInt(req.params.clubId);
-    if (!clubId) {
-      throw new BadRequestError('Club ID must be an integer.')
-    }
-
-    const club = await Club.get(clubId);
-
-    if (!club) {
-      throw new NotFoundError(`Club with ID ${clubId} not found.`);
-    }
-
-    const message = await club.delete();
+    const message = await req.club.delete();
 
     return res.json({ message });
   } catch(e) {

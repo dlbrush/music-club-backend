@@ -26,13 +26,13 @@ class User {
     const filters = handleUserFilters(username);
 
     const result = await db.query(`
-      SELECT username, email, profile_img_url
+      SELECT username, profile_img_url
       FROM users
       ${filters.string}
       ORDER BY username ASC
     `, filters.parameters);
     return result.rows.map(row => {
-      return new User(row.username, row.email, row.profile_img_url)
+      return new User(row.username, row.profile_img_url)
     });
   }
 

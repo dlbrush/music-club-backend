@@ -23,7 +23,7 @@ router.get('/', ensureLoggedIn, async function (req, res, next) {
   }
 });
 
-router.get('/:username', ensureAdminOrSameUser, async function (req, res, next) {
+router.get('/:username', ensureLoggedIn, ensureAdminOrSameUser, async function (req, res, next) {
   try {
     const user = await User.get(req.params.username);
     if (!user) {
@@ -57,7 +57,7 @@ router.get('/:username', ensureAdminOrSameUser, async function (req, res, next) 
   }
 });
 
-router.post('/', async function (req, res, next) {
+router.post('/', ensureLoggedIn, ensureAdmin, async function (req, res, next) {
   try {
     // Validate request
     validateRequest(req.body, newUserSchema);
@@ -82,7 +82,7 @@ router.post('/', async function (req, res, next) {
  * POST /:username/join-club/:clubId
  * Allows the user to attempt to join a club
  */
-router.post('/:username/join-club/:clubId', async function (req, res, next) {
+router.post('/:username/join-club/:clubId', ensureLoggedIn, async function (req, res, next) {
   try {
     // First, make sure passed club ID is an integer
     const clubId = parseInt(req.params.clubId);
@@ -106,7 +106,7 @@ router.post('/:username/join-club/:clubId', async function (req, res, next) {
   }
 });
 
-router.patch('/:username', async function (req, res, next) {
+router.patch('/:username', ensureLoggedIn, ensureAdminOrSameUser, async function (req, res, next) {
   try {
     const user = await User.get(req.params.username);
 
@@ -128,7 +128,7 @@ router.patch('/:username', async function (req, res, next) {
   }
 });
 
-router.delete('/:username', async function (req, res, next) {
+router.delete('/:username', ensureLoggedIn, ensureAdminOrSameUser, async function (req, res, next) {
   try {
     const user = await User.get(req.params.username);
     if (!user) {

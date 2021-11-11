@@ -2,6 +2,7 @@ const express = require('express');
 
 const { NotFoundError, BadRequestError, UnauthorizedError } = require('../helpers/errors');
 const Post = require('../models/Post');
+const Club = require('../models/Club');
 const Album = require('../models/Album');
 const AlbumGenre = require('../models/AlbumGenre');
 const User = require('../models/User');
@@ -10,14 +11,15 @@ const Comment = require('../models/Comment');
 const MembershipService = require('../services/MembershipService');
 const VoteService = require('../services/VoteService');
 const { validateRequest } = require('../helpers/validation');
-const { ensureLoggedIn } = require('../middleware/auth');
+const { ensureLoggedIn, ensureAdminOrValidClub, ensureAdminOrSameUser, ensureAdminOrPoster } = require('../middleware/auth');
+const { checkPost } = require('../middleware/posts');
 const updatePostSchema = require('../schemas/updatePost.json');
 
 const router = new express.Router();
 
 // No post route needed here (for now) because posts are made to a club in club route. Maybe an admin route in the future
 
-router.get('/', async function(req, res, next) {
+router.get('/', ensureLoggedIn, ensureAdminOrValidClub('query', 'clubId', {allowPublic: true}), async function(req, res, next) {
   try {
     const clubId = req.query['clubId'];
     const posts = await Post.getAll(clubId);
@@ -37,18 +39,10 @@ router.get('/', async function(req, res, next) {
   }
 });
 
-router.get('/:postId', async function(req, res, next) {
+router.get('/:postId', ensureLoggedIn, checkPost, ensureAdminOrValidClub('post', 'clubId', {allowPublic: true}), async function(req, res, next) {
   try {
-    const postId = parseInt(req.params.postId);
-    if (!Number.isInteger(postId)) {
-      throw new BadRequestError('Post ID must be an integer.')
-    }
-    const post = await Post.get(postId);
-    if (!post) {
-      throw new NotFoundError(`Post with ID ${postId} not found.`);
-    }
-
     // Add comments, and add user data for each comment
+    const postId = req.post.id;
     const comments = await Comment.getAll(postId);
     const commentUserSet = new Set();
     comments.forEach(comment => commentUserSet.add(comment.username));
@@ -75,9 +69,9 @@ router.get('/:postId', async function(req, res, next) {
 });
 
 /**
- * Deliver recent posts for all clubs the given user is a part of
+ * Deliver posts for all clubs the given user is a part of
  */
-router.get('/recent/:username', async function(req, res, next) {
+router.get('/recent/:username', ensureLoggedIn, ensureAdminOrSameUser, async function(req, res, next) {
   try {
     // Check that user exists
     const user = await User.get(req.params.username);
@@ -91,6 +85,12 @@ router.get('/recent/:username', async function(req, res, next) {
 
     // Get posts for user's clubs
     const posts = await Post.getAllForClubs(userClubIds);
+
+    // Get club name for each post
+    const clubs = await Club.getSome(userClubIds);
+    const clubNameMap = {};
+    clubs.forEach(club => clubNameMap[club.id] = club.name);
+    posts.forEach(post => post.clubName = clubNameMap[post.clubId]);
     
     // Get album data for posts
     const albumIds = posts.map(post => post.discogsId);
@@ -110,6 +110,7 @@ router.get('/recent/:username', async function(req, res, next) {
   }
 });
 
+// NOT CURRENTLY IN USE
 // Create a vote on a post or update an existing vote. Type parameter can be 'up' or 'down'.
 router.post('/:postId/vote/:type', ensureLoggedIn, async function(req, res, next) {
   try {
@@ -149,22 +150,10 @@ router.post('/:postId/vote/:type', ensureLoggedIn, async function(req, res, next
   }
 });
 
-router.post('/:postId/new-comment', ensureLoggedIn, async function(req, res, next) {
+router.post('/:postId/new-comment', ensureLoggedIn, checkPost, ensureAdminOrValidClub('post', 'clubId', {}), ensureLoggedIn, async function(req, res, next) {
   try {
-    // Ensure post exists
-    const post = await Post.get(req.params.postId);
-    if (!post) {
-      throw new NotFoundError(`No post with id ${req.params.postId}`);
-    }
-
-    // Check that requesting user is in club where post was made
-    const isMember = await MembershipService.checkMembership(req.user.username, post.clubId);
-    if (!isMember) {
-      throw new UnauthorizedError(`Sorry, you must be a member of club with ID ${post.clubId} to vote on post ${postId}`);
-    }
-
-    // Finally, make new comment
-    const newComment = await Comment.create(req.user.username, req.body.comment, post.id);
+    // Make new comment
+    const newComment = await Comment.create(req.user.username, req.body.comment, req.post.id);
 
     // Get user info and attach it to comment
     const { username, profileImgUrl } = await User.get(req.user.username);
@@ -177,17 +166,9 @@ router.post('/:postId/new-comment', ensureLoggedIn, async function(req, res, nex
   }
 });
 
-router.patch('/:postId', async function(req, res, next) {
+router.patch('/:postId', ensureLoggedIn, ensureAdminOrPoster, async function(req, res, next) {
   try {
-    const postId = parseInt(req.params.postId);
-    if (!Number.isInteger(postId)) {
-      throw new BadRequestError('Post ID must be an integer.')
-    }
-    const post = await Post.get(postId);
-    if (!post) {
-      throw new NotFoundError(`Post with ID ${postId} not found.`);
-    }
-
+    const post = req.post;
     validateRequest(req.body, updatePostSchema);
 
     if (req.body.recTracks) post.recTracks = req.body.recTracks;
@@ -199,18 +180,9 @@ router.patch('/:postId', async function(req, res, next) {
   }
 });
 
-router.delete('/:postId', async function(req, res, next) {
+router.delete('/:postId', ensureLoggedIn, ensureAdminOrPoster, async function(req, res, next) {
   try {
-    const postId = parseInt(req.params.postId);
-    if (!Number.isInteger(postId)) {
-      throw new BadRequestError('Post ID must be an integer.')
-    }
-    const post = await Post.get(postId);
-    if (!post) {
-      throw new NotFoundError(`Post with ID ${postId} not found.`);
-    }
-
-    const message = await post.delete();
+    const message = await req.post.delete();
     res.json({ message });
   } catch (e) {
     next(e)

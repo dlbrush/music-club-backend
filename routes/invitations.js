@@ -5,25 +5,14 @@ const Invitation = require('../models/Invitation');
 const User = require('../models/User');
 const MembershipService = require('../services/MembershipService');
 const { NotFoundError, UnauthorizedError, BadRequestError } = require('../helpers/errors');
-const { ensureLoggedIn } = require('../middleware/auth');
+const { ensureLoggedIn, ensureAdminOrValidClub } = require('../middleware/auth');
 
 const router = new express.Router();
 
-router.post('/', ensureLoggedIn, async function(req, res, next) {
+router.post('/', ensureLoggedIn, ensureAdminOrValidClub('body', 'clubId', {}), async function(req, res, next) {
   try {
-    // Expecting body of clubId, username
-    // Check that club exists
-    const club = await Club.get(req.body.clubId);
-    if (!club) {
-      throw new NotFoundError(`No club found with ID ${req.body.clubId}`);
-    }
-
-    // Check that inviting user is member of club
-    const userIsMember = await MembershipService.checkMembership(req.user.username, club.id);
-    if (!userIsMember) {
-      throw new UnauthorizedError('Unauthorized: unable to send invitation to club you are not a member of.');
-    }
-
+    const club = req.club;
+    
     // Check that invited user exists
     const invitedUser = await User.get(req.body.username);
     if (!invitedUser) {
