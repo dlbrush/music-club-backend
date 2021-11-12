@@ -16,4 +16,4 @@ Password: 'test1'
 
 ## API
 
-This app uses the (Discogs API.)[https://www.discogs.com/developers]
+This app uses the [Discogs API.](https://www.discogs.com/developers)
