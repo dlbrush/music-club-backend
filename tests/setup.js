@@ -1,6 +1,7 @@
 const db = require('../db');
 const User = require('../models/User');
 const Club = require('../models/Club');
+const Comment = require('../models/Comment');
 const UserClub = require('../models/UserClub');
 const Album = require('../models/Album');
 const Post = require('../models/Post');
@@ -76,6 +77,8 @@ async function seedDb() {
 async function createTestObjects() {
   const user1 = await User.create('test1', 'test1', 'test1@test.com', 'http://test.com/1.jpg', true)
   const user2 = await User.create('test2', 'test2', 'test2@test.com', 'http://test.com/2.jpg', false);
+  // User who is not a member of any club - used for testing club privacy
+  const user3 = await User.create('test3', 'test3', 'test3@test.com');
   const club1 = await Club.create('testClub1', 'testing club 1', user1, true, 'http://test.com/1.jpg');
   const club2 = await Club.create('testClub2', 'testing club 2', user2, false, 'http://test.com/2.jpg');
   const userClub1 = await UserClub.create('test1', club1.id);
@@ -84,9 +87,11 @@ async function createTestObjects() {
   const post1 = await Post.create(club1.id, album1.discogsId, user1.username, 'Test Track', 'Check this out');
   const post2 = await Post.create(club2.id, album1.discogsId, user2.username, 'Test Track', 'Check this out');
   const vote1 = await Vote.create(post2.id, user2.username, true);
+  const comment1 = await Comment.create(user2.username, 'Comment', post2.id);
   return {
     user1,
     user2,
+    user3,
     club1,
     club2,
     userClub1,
@@ -94,7 +99,8 @@ async function createTestObjects() {
     album1,
     post1,
     post2,
-    vote1
+    vote1,
+    comment1
   }
 }
 

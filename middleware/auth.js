@@ -53,7 +53,7 @@ function ensureAdminOrValidClub(objectName, property, options) {
   return async function(req, res, next) {
     try {
       const { admin, username } = req.user;
-      // Skip all other validation if admin should
+      // Skip all other validation if admin should see route regardless
       if (admin && options['adminSkipValidation']) {
         return next();
       }
@@ -79,7 +79,7 @@ function ensureAdminOrValidClub(objectName, property, options) {
         validRole = await MembershipService.checkMembership(username, clubId);
       }
       if (!admin && !validRole && !isPublic) {
-        throw new UnauthorizedError(`Unauthorized: This route requires admin permissions${options['allowPublic'] ? ', a public club,' : ''} or club membership.`);
+        throw new UnauthorizedError(`Unauthorized: This route requires admin permissions${options['allowPublic'] ? ', a public club,' : ''} or ${options['founderOnly'] ? 'the club founder' : 'club membership'}.`);
       }
       next();
     } catch(e) {
@@ -101,7 +101,7 @@ async function ensureAdminOrCommenter(req, res, next) {
     // Confirm this comment exists
     const comment = await Comment.get(commentId);
     if (!comment) {
-      throw new NotFoundError(`No comment found with the ID ${comment.id}.`);
+      throw new NotFoundError(`No comment found with the ID ${commentId}.`);
     }
 
     // Check if user is commenter
@@ -117,7 +117,7 @@ async function ensureAdminOrCommenter(req, res, next) {
   }
 }
 
-async function ensureAdminOrPoster (req, res, next) {
+async function ensureAdminOrPoster(req, res, next) {
   try {
     const { admin, username } = req.user;
 
@@ -132,7 +132,7 @@ async function ensureAdminOrPoster (req, res, next) {
 
     // Check if user is poster
     if (!admin && username !== post.postedBy) {
-      throw new UnauthorizedError('Unauthorized: Must be admin or the user who made this comment to access this route.');
+      throw new UnauthorizedError('Unauthorized: Must be admin or the user who made this post to access this route.');
     }
     
     // Attach post to req and continue
