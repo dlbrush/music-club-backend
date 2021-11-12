@@ -1,5 +1,4 @@
 const request = require('supertest');
-const jwt = require('jsonwebtoken');
 
 const app = require("../../app");
 const db = require('../../db');
@@ -36,12 +35,10 @@ describe('users routes', () => {
         users: [
           {
             username: user1.username,
-            email: user1.email,
             profileImgUrl: user1.profileImgUrl
           },
           {
             username: user2.username,
-            email: user2.email,
             profileImgUrl: user2.profileImgUrl
           }
         ]
@@ -57,7 +54,6 @@ describe('users routes', () => {
         users: [
           {
             username: user1.username,
-            email: user1.email,
             profileImgUrl: user1.profileImgUrl
           }
         ]
@@ -97,8 +93,10 @@ describe('users routes', () => {
           email: user2.email,
           admin: user2.admin,
           profileImgUrl: user2.profileImgUrl,
+          invitations: [],
           clubs: [
             {
+              bannerImgUrl: club2.bannerImgUrl,
               id: club2.id,
               name: club2.name,
               description: club2.description,
@@ -121,8 +119,10 @@ describe('users routes', () => {
           email: user2.email,
           admin: user2.admin,
           profileImgUrl: user2.profileImgUrl,
+          invitations: [],
           clubs: [
             {
+              bannerImgUrl: club2.bannerImgUrl,
               id: club2.id,
               name: club2.name,
               description: club2.description,
@@ -177,6 +177,7 @@ describe('users routes', () => {
     it('Returns new user on successful post', async () => {
       const response = await request(app)
                               .post('/users')
+                              .set('Cookie', adminTokenCookie)
                               .send(testCreateBody);
       expect(response.status).toEqual(201);
       expect(response.body).toEqual({
@@ -194,6 +195,7 @@ describe('users routes', () => {
       delete testCreateBody.admin;
       const response = await request(app)
                               .post('/users')
+                              .set('Cookie', adminTokenCookie)
                               .send(testCreateBody);
       expect(response.status).toEqual(201);
       expect(response.body).toEqual({
@@ -210,6 +212,7 @@ describe('users routes', () => {
       testCreateBody.email = 'notAnEmail';
       const response = await request(app)
                               .post('/users')
+                              .set('Cookie', adminTokenCookie)
                               .send(testCreateBody);
       expect(response.status).toEqual(400);
       expect(response.body).toEqual({
@@ -224,6 +227,7 @@ describe('users routes', () => {
       testCreateBody.profileImgUrl = 'notAnEmail';
       const response = await request(app)
                               .post('/users')
+                              .set('Cookie', adminTokenCookie)
                               .send(testCreateBody);
       expect(response.status).toEqual(400);
       expect(response.body).toEqual({
@@ -238,6 +242,7 @@ describe('users routes', () => {
       delete testCreateBody.username;
       const response = await request(app)
                               .post('/users')
+                              .set('Cookie', adminTokenCookie)
                               .send(testCreateBody);
       expect(response.status).toEqual(400);
       expect(response.body).toEqual({
@@ -252,6 +257,7 @@ describe('users routes', () => {
       testCreateBody.admin = 'abc';
       const response = await request(app)
                               .post('/users')
+                              .set('Cookie', adminTokenCookie)
                               .send(testCreateBody);
       expect(response.status).toEqual(400);
       expect(response.body).toEqual({
@@ -266,6 +272,7 @@ describe('users routes', () => {
       testCreateBody.extra = 'abc';
       const response = await request(app)
                               .post('/users')
+                              .set('Cookie', adminTokenCookie)
                               .send(testCreateBody);
       expect(response.status).toEqual(400);
       expect(response.body).toEqual({
@@ -281,6 +288,7 @@ describe('users routes', () => {
       testCreateBody.email = user1.email;
       const response = await request(app)
                               .post('/users')
+                              .set('Cookie', adminTokenCookie)
                               .send(testCreateBody);
       expect(response.status).toEqual(400);
       expect(response.body).toEqual({
@@ -295,7 +303,8 @@ describe('users routes', () => {
   describe('POST /:username/join-club/:clubId', () => {
     it('Returns message on success', async () => {
       const response = await request(app)
-                              .post(`/users/${user1.username}/join-club/${club2.id}`);
+                              .post(`/users/${user1.username}/join-club/${club2.id}`)
+                              .set('Cookie', adminTokenCookie);
       expect(response.status).toEqual(201);
       expect(response.body).toEqual({
         message: `User ${user1.username} has successfully joined club ${club2.name} (ID: ${club2.id})`
@@ -304,7 +313,8 @@ describe('users routes', () => {
 
     it('Adds UserClub to database on success', async () => {
       const response = await request(app)
-                              .post(`/users/${user1.username}/join-club/${club2.id}`);
+                              .post(`/users/${user1.username}/join-club/${club2.id}`)
+                              .set('Cookie', adminTokenCookie);
       const userClub = await UserClub.get(user1.username, club2.id);
       expect(userClub).toEqual({
         username: user1.username,
@@ -314,7 +324,8 @@ describe('users routes', () => {
 
     it('Adds UserClub to database on success', async () => {
       const response = await request(app)
-                              .post(`/users/${user1.username}/join-club/${club2.id}`);
+                              .post(`/users/${user1.username}/join-club/${club2.id}`)
+                              .set('Cookie', adminTokenCookie);
       const userClub = await UserClub.get(user1.username, club2.id);
       expect(userClub).toEqual({
         username: user1.username,
@@ -324,7 +335,8 @@ describe('users routes', () => {
 
     it('Returns an error if clubId is not an integer', async () => {
       const response = await request(app)
-                              .post(`/users/${user1.username}/join-club/abc`);
+                              .post(`/users/${user1.username}/join-club/abc`)
+                              .set('Cookie', adminTokenCookie);
       expect(response.status).toEqual(400);
       expect(response.body).toEqual({
         error: {
@@ -336,7 +348,8 @@ describe('users routes', () => {
 
     it('Returns an error if the user is already a member of that club', async () => {
       const response = await request(app)
-                              .post(`/users/${user1.username}/join-club/${club1.id}`);
+                              .post(`/users/${user1.username}/join-club/${club1.id}`)
+                              .set('Cookie', adminTokenCookie);
       expect(response.status).toEqual(400);
       expect(response.body).toEqual({
         error: {
@@ -358,17 +371,35 @@ describe('users routes', () => {
       }
     });
 
-    it('Responds with message and updated user on success', async () => {
+    it('Responds with message and updated user on success for admin', async () => {
       const response = await request(app)
-                              .patch(`/users/${user1.username}`)
+                              .patch(`/users/${user2.username}`)
+                              .set('Cookie', adminTokenCookie)
                               .send(updateUserBody);
       expect(response.status).toEqual(200);
       expect(response.body).toEqual({
-        message: `Updated user ${user1.username}.`,
+        message: `Updated user ${user2.username}.`,
         user: {
-          username: user1.username,
+          username: user2.username,
           email: updateUserBody.email,
-          admin: user1.admin,
+          admin: user2.admin,
+          profileImgUrl: updateUserBody.profileImgUrl
+        }
+      });
+    });
+
+    it('Responds with message and updated user on success for the user in the route', async () => {
+      const response = await request(app)
+                              .patch(`/users/${user2.username}`)
+                              .set('Cookie', userTokenCookie)
+                              .send(updateUserBody);
+      expect(response.status).toEqual(200);
+      expect(response.body).toEqual({
+        message: `Updated user ${user2.username}.`,
+        user: {
+          username: user2.username,
+          email: updateUserBody.email,
+          admin: user2.admin,
           profileImgUrl: updateUserBody.profileImgUrl
         }
       });
@@ -377,6 +408,7 @@ describe('users routes', () => {
     it('Updates user in the DB', async () => {
       const response = await request(app)
                               .patch(`/users/${user1.username}`)
+                              .set('Cookie', adminTokenCookie)
                               .send(updateUserBody);
       const user = await User.get(user1.username);
       expect(user).toEqual({
@@ -391,6 +423,7 @@ describe('users routes', () => {
       updateUserBody.email = 'notAnEmail';
       const response = await request(app)
                               .patch(`/users/${user1.username}`)
+                              .set('Cookie', adminTokenCookie)
                               .send(updateUserBody);
       expect(response.status).toEqual(400);
       expect(response.body).toEqual({
@@ -405,6 +438,7 @@ describe('users routes', () => {
       updateUserBody.profileImgUrl = 'notAnUrl';
       const response = await request(app)
                               .patch(`/users/${user1.username}`)
+                              .set('Cookie', adminTokenCookie)
                               .send(updateUserBody);
       expect(response.status).toEqual(400);
       expect(response.body).toEqual({
@@ -418,7 +452,8 @@ describe('users routes', () => {
     it('Returns 404 if nonexistent user', async () => {
       const response = await request(app)
                               .patch('/users/abc')
-                              .send(updateUserBody);
+                              .send(updateUserBody)
+                              .set('Cookie', adminTokenCookie);
       expect(response.status).toEqual(404);
       expect(response.body).toEqual({
         error: {
@@ -431,25 +466,38 @@ describe('users routes', () => {
 
   describe('DELETE /:username', () => {
 
-    it('Returns message on success', async () => {
+    it('Returns message on success for admin', async () => {
       const response = await request(app)
-                              .delete(`/users/${user1.username}`);
+                              .delete(`/users/${user2.username}`)
+                              .set('Cookie', adminTokenCookie);
       expect(response.status).toEqual(200);
       expect(response.body).toEqual({
-        message: `Deleted user ${user1.username}.`
+        message: `Deleted user ${user2.username}.`
+      });
+    });
+
+    it('Returns message on success for own user', async () => {
+      const response = await request(app)
+                              .delete(`/users/${user2.username}`)
+                              .set('Cookie', userTokenCookie);
+      expect(response.status).toEqual(200);
+      expect(response.body).toEqual({
+        message: `Deleted user ${user2.username}.`
       });
     });
 
     it('Deletes user from DB on success', async () => {
       const response = await request(app)
-                              .delete(`/users/${user1.username}`);
+                              .delete(`/users/${user1.username}`)
+                              .set('Cookie', adminTokenCookie);
       const user = await User.get(user1.username);
       expect(user).toEqual(undefined);
     });
 
     it('Returns 404 if nonexistent user', async () => {
       const response = await request(app)
-                              .delete('/users/abc');
+                              .delete('/users/abc')
+                              .set('Cookie', adminTokenCookie);
       expect(response.status).toEqual(404);
       expect(response.body).toEqual({
         error: {

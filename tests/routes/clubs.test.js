@@ -274,7 +274,6 @@ describe('clubs routes', () => {
                               .post('/clubs')
                               .set('Cookie', adminTokenCookie)
                               .send(testCreateBody);
-      console.log(response.body);
       expect(response.status).toEqual(400);
       expect(response.body).toEqual({
         error: {
