@@ -6,7 +6,7 @@ const { handleUserFilters, createParamList } = require('../helpers/sql');
 const { generateUserToken } = require('../helpers/auth');
 
 class User {
-  constructor(username, email, profileImgUrl, admin) {
+  constructor(username, profileImgUrl, email, admin) {
     this.username = username;
     this.email = email;
     this.profileImgUrl = profileImgUrl;
@@ -41,13 +41,13 @@ class User {
     const paramList = createParamList(usernames, 'username');
 
     const result = await db.query(`
-      SELECT username, email, profile_img_url
+      SELECT username, profile_img_url
       FROM users
       ${paramList}
       ORDER BY username ASC
     `, usernames);
     return result.rows.map(row => {
-      return new User(row.username, row.email, row.profile_img_url)
+      return new User(row.username, row.profile_img_url)
     });
   }
 
@@ -66,7 +66,7 @@ class User {
     `, [username, email]);
     const user = result.rows[0];
     if (user) {
-      return new User(user.username, user.email, user.profile_img_url, user.admin);
+      return new User(user.username, user.profile_img_url, user.email, user.admin);
     } 
   }
 
@@ -99,7 +99,7 @@ class User {
       RETURNING username, email, admin,  profile_img_url
     `, parameters);
     const userRow = result.rows[0];
-    return new User(userRow.username, userRow.email, userRow.profile_img_url, userRow.admin);
+    return new User(userRow.username, userRow.profile_img_url, userRow.email, userRow.admin);
   }
 
   /**

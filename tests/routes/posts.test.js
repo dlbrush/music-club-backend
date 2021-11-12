@@ -11,9 +11,11 @@ describe('posts routes', () => {
   let post1;
   let post2;
   let club1;
+  let club2;
   let user1;
   let user2;
   let vote1;
+  let album1;
   
   beforeEach(async () => {
     await clearDb();
@@ -21,9 +23,11 @@ describe('posts routes', () => {
     post1 = testObjects.post1;
     post2 = testObjects.post2;
     club1 = testObjects.club1;
+    club2 = testObjects.club2
     user1 = testObjects.user1;
     user2 = testObjects.user2;
     vote1 = testObjects.vote1;
+    album1 = testObjects.album1;
   });
 
   afterEach(async () => {
@@ -31,23 +35,63 @@ describe('posts routes', () => {
   });
 
   describe('GET /', () => {
-    it('Returns all posts when no query string passed', async () => {
+    it('Returns all posts in descending order of ID for admin when no query string passed', async () => {
       const response = await request(app)
-                             .get('/posts');
+                             .get('/posts')
+                             .set('Cookie', adminTokenCookie);
       expect(response.status).toEqual(200);
       expect(response.body.posts.length).toEqual(2);
       expect(response.body).toEqual({
         posts: [
           {
+            id: post2.id,
+            album: {
+              artist: album1.artist,
+              coverImgUrl: album1.coverImgUrl,
+              title: album1.title,
+              year: album1.year,
+            },
+            clubId: post2.clubId,
+            discogsId: post2.discogsId,
+            postedAt: post2.postedAt.toISOString(),
+            postedBy: post2.postedBy,
+            content: post2.content
+          },
+          {
             id: post1.id,
+            album: {
+              artist: album1.artist,
+              coverImgUrl: album1.coverImgUrl,
+              title: album1.title,
+              year: album1.year,
+            },
             clubId: post1.clubId,
             discogsId: post1.discogsId,
             postedAt: post1.postedAt.toISOString(),
             postedBy: post1.postedBy,
             content: post1.content
-          },
+          }
+        ]
+      });
+    });
+
+
+    it('Returns only posts in passed club ID for user in club', async () => {
+      const response = await request(app)
+                             .get(`/posts?clubId=${club2.id}`)
+                             .set('Cookie', userTokenCookie);
+      expect(response.status).toEqual(200);
+      expect(response.body.posts.length).toEqual(1);
+      expect(response.body).toEqual({
+        posts: [
           {
             id: post2.id,
+            album: {
+              artist: album1.artist,
+              coverImgUrl: album1.coverImgUrl,
+              title: album1.title,
+              year: album1.year,
+            },
             clubId: post2.clubId,
             discogsId: post2.discogsId,
             postedAt: post2.postedAt.toISOString(),
@@ -58,28 +102,10 @@ describe('posts routes', () => {
       });
     });
 
-    it('Returns only posts in passed club ID', async () => {
-      const response = await request(app)
-                             .get(`/posts?clubId=${club1.id}`);
-      expect(response.status).toEqual(200);
-      expect(response.body.posts.length).toEqual(1);
-      expect(response.body).toEqual({
-        posts: [
-          {
-            id: post1.id,
-            clubId: post1.clubId,
-            discogsId: post1.discogsId,
-            postedAt: post1.postedAt.toISOString(),
-            postedBy: post1.postedBy,
-            content: post1.content
-          }
-        ]
-      });
-    });
-
     it('Returns empty array when no posts matched', async () => {
       const response = await request(app)
-                             .get(`/posts?clubId=9999`);
+                             .get(`/posts?clubId=9999`)
+                             .set('Cookie', adminTokenCookie);
       expect(response.status).toEqual(200);
       expect(response.body).toEqual({
         posts: []
@@ -88,26 +114,58 @@ describe('posts routes', () => {
   });
 
   describe('GET /:postId', () => {
-    it('Returns post details on success', async () => {
+    it('Returns post details on success for user in club', async () => {
       const response = await request(app)
-                             .get(`/posts/${post1.id}`);
+                             .get(`/posts/${post2.id}`)
+                             .set('Cookie', userTokenCookie);
       expect(response.status).toEqual(200);
       expect(response.body).toEqual({
         post: {
-          id: post1.id,
-          clubId: post1.clubId,
-          discogsId: post1.discogsId,
-          postedAt: post1.postedAt.toISOString(),
-          postedBy: post1.postedBy,
-          content: post1.content,
-          recTracks: post1.recTracks
+          id: post2.id,
+          album: {
+            ...album1,
+            genres: []
+          },
+          clubId: post2.clubId,
+          comments: [],
+          discogsId: post2.discogsId,
+          postedAt: post2.postedAt.toISOString(),
+          postedBy: post2.postedBy,
+          content: post2.content,
+          recTracks: post2.recTracks
         }
       })
     });
 
-    it('Returns error when post ID is not an error', async () => {
+    it('Returns post details on success for admin', async () => {
       const response = await request(app)
-                             .get('/posts/abc');
+                             .get(`/posts/${post2.id}`)
+                             .set('Cookie', adminTokenCookie);
+      expect(response.status).toEqual(200);
+      expect(response.body).toEqual({
+        post: {
+          id: post2.id,
+          clubId: post2.clubId,
+          album: {
+            ...album1,
+            genres: []
+          },
+          discogsId: post2.discogsId,
+          comments: [],
+          postedAt: post2.postedAt.toISOString(),
+          postedBy: post2.postedBy,
+          content: post2.content,
+          recTracks: post2.recTracks
+        }
+      })
+    });
+
+    // TODO: Success for public club
+
+    it('Returns error when post ID is not an integer', async () => {
+      const response = await request(app)
+                             .get('/posts/abc')
+                             .set('Cookie', userTokenCookie);
       expect(response.status).toEqual(400);
       expect(response.body).toEqual({
         error: {
@@ -119,7 +177,8 @@ describe('posts routes', () => {
 
     it('Returns error when post ID is not in database', async () => {
       const response = await request(app)
-                             .get('/posts/9999');
+                             .get('/posts/9999')
+                             .set('Cookie', userTokenCookie);
       expect(response.status).toEqual(404);
       expect(response.body).toEqual({
         error: {
@@ -214,19 +273,40 @@ describe('posts routes', () => {
       }
     });
 
-    it('Returns updated post on success', async () => {
+    it('Returns updated post on success for same user', async () => {
       const response = await request(app)
-                             .patch(`/posts/${post1.id}`)
+                             .patch(`/posts/${post2.id}`)
+                             .set('Cookie', userTokenCookie)
                              .send(updatePostBody);
       expect(response.status).toEqual(200);
       expect(response.body).toEqual({
-        message: `Updated post ${post1.id}.`,
+        message: `Updated post ${post2.id}.`,
         post: {
-          id: post1.id,
-          clubId: post1.clubId,
-          discogsId: post1.discogsId,
-          postedAt: post1.postedAt.toISOString(),
-          postedBy: post1.postedBy,
+          id: post2.id,
+          clubId: post2.clubId,
+          discogsId: post2.discogsId,
+          postedAt: post2.postedAt.toISOString(),
+          postedBy: post2.postedBy,
+          content: updatePostBody.content,
+          recTracks: updatePostBody.recTracks
+        }
+      });
+    });
+
+    it('Returns updated post on success for admin', async () => {
+      const response = await request(app)
+                             .patch(`/posts/${post2.id}`)
+                             .set('Cookie', adminTokenCookie)
+                             .send(updatePostBody);
+      expect(response.status).toEqual(200);
+      expect(response.body).toEqual({
+        message: `Updated post ${post2.id}.`,
+        post: {
+          id: post2.id,
+          clubId: post2.clubId,
+          discogsId: post2.discogsId,
+          postedAt: post2.postedAt.toISOString(),
+          postedBy: post2.postedBy,
           content: updatePostBody.content,
           recTracks: updatePostBody.recTracks
         }
@@ -236,6 +316,7 @@ describe('posts routes', () => {
     it('Updates post in the DB on success', async () => {
       const response = await request(app)
                              .patch(`/posts/${post1.id}`)
+                             .set('Cookie', adminTokenCookie)
                              .send(updatePostBody);
       const post = await Post.get(post1.id);
       expect(post).toEqual({
@@ -251,7 +332,8 @@ describe('posts routes', () => {
 
     it('Keeps everything the same when nothing is passed', async () => {
       const response = await request(app)
-                             .patch(`/posts/${post1.id}`);
+                             .patch(`/posts/${post1.id}`)
+                             .set('Cookie', adminTokenCookie);
       const post = await Post.get(post1.id);
       expect(response.body).toEqual({
         message: `Updated post ${post1.id}.`,
@@ -270,6 +352,7 @@ describe('posts routes', () => {
     it('Returns bad request error when postId is not an integer', async () => {
       const response = await request(app)
                              .patch(`/posts/abc`)
+                             .set('Cookie', adminTokenCookie)
                              .send(updatePostBody);
       expect(response.status).toEqual(400);
       expect(response.body).toEqual({
@@ -283,6 +366,7 @@ describe('posts routes', () => {
     it('Returns bad request error when postId is not in DB', async () => {
       const response = await request(app)
                              .patch(`/posts/9999`)
+                             .set('Cookie', adminTokenCookie)
                              .send(updatePostBody);
       expect(response.status).toEqual(404);
       expect(response.body).toEqual({
@@ -297,6 +381,7 @@ describe('posts routes', () => {
       updatePostBody.extra = 'no';
       const response = await request(app)
                              .patch(`/posts/${post1.id}`)
+                             .set('Cookie', adminTokenCookie)
                              .send(updatePostBody);
       expect(response.status).toEqual(400);
       expect(response.body).toEqual({
@@ -309,25 +394,37 @@ describe('posts routes', () => {
   });
 
   describe('DELETE /:postId', () => {
-    it('Returns message on success', async () => {
+    it('Returns message on success for the poster', async () => {
       const response = await request(app)
-                             .delete(`/posts/${post1.id}`);
+                             .delete(`/posts/${post2.id}`)
+                             .set('Cookie', userTokenCookie);
       expect(response.status).toEqual(200);
       expect(response.body).toEqual({
-        message: `Deleted post ${post1.id}.`
+        message: `Deleted post ${post2.id}.`
+      });
+    });
+    it('Returns message on success for admin', async () => {
+      const response = await request(app)
+                             .delete(`/posts/${post2.id}`)
+                             .set('Cookie', adminTokenCookie);
+      expect(response.status).toEqual(200);
+      expect(response.body).toEqual({
+        message: `Deleted post ${post2.id}.`
       });
     });
 
     it('Deletes post in the DB on success', async () => {
       const response = await request(app)
-                             .delete(`/posts/${post1.id}`);
+                             .delete(`/posts/${post1.id}`)
+                             .set('Cookie', adminTokenCookie);
       const post = await Post.get(post1.id);
       expect(post).toEqual(undefined);
     });
 
     it('Returns bad request error when postId is not an integer', async () => {
       const response = await request(app)
-                             .delete(`/posts/abc`);
+                             .delete(`/posts/abc`)
+                             .set('Cookie', adminTokenCookie);
       expect(response.status).toEqual(400);
       expect(response.body).toEqual({
         error: {
@@ -339,7 +436,8 @@ describe('posts routes', () => {
 
     it('Returns bad request error when postId is not in DB', async () => {
       const response = await request(app)
-                             .delete('/posts/9999');
+                             .delete('/posts/9999')
+                             .set('Cookie', adminTokenCookie);
       expect(response.status).toEqual(404);
       expect(response.body).toEqual({
         error: {

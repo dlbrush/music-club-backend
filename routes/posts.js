@@ -19,7 +19,7 @@ const router = new express.Router();
 
 // No post route needed here (for now) because posts are made to a club in club route. Maybe an admin route in the future
 
-router.get('/', ensureLoggedIn, ensureAdminOrValidClub('query', 'clubId', {allowPublic: true}), async function(req, res, next) {
+router.get('/', ensureLoggedIn, ensureAdminOrValidClub('query', 'clubId', {allowPublic: true, adminSkipValidation: true}), async function(req, res, next) {
   try {
     const clubId = req.query['clubId'];
     const posts = await Post.getAll(clubId);

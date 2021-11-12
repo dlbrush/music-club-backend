@@ -7,9 +7,9 @@ const Club = require('../models/Club');
 const Invitation = require('../models/Invitation');
 const MembershipService = require('../services/MembershipService');
 const { validateRequest } = require('../helpers/validation');
+const { ensureAdmin, ensureLoggedIn, ensureAdminOrSameUser } = require('../middleware/auth');
 const newUserSchema = require('../schemas/newUser.json');
 const updateUserSchema = require('../schemas/updateUser.json');
-const { ensureAdmin, ensureLoggedIn, ensureAdminOrSameUser } = require('../middleware/auth');
 
 const router = new express.Router();
 

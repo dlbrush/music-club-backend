@@ -20,24 +20,24 @@ describe('Post model', () => {
   });
 
   describe('#getAll', () => {
-    it('Returns all posts with expected properties when no arguments passed', async () => {
+    it('Returns all posts with expected properties when no arguments passed, in descending ID order', async () => {
       const posts = await Post.getAll();
       expect(posts.length).toEqual(2);
       expect(posts[0]).toEqual({
-        id: post1.id,
-        clubId: post1.clubId,
-        discogsId: post1.discogsId,
-        postedBy: post1.postedBy,
-        postedAt: post1.postedAt,
-        content: post1.content
-      });
-      expect(posts[1]).toEqual({
         id: post2.id,
         clubId: post2.clubId,
         discogsId: post2.discogsId,
         postedBy: post2.postedBy,
         postedAt: post2.postedAt,
         content: post2.content
+      });
+      expect(posts[1]).toEqual({
+        id: post1.id,
+        clubId: post1.clubId,
+        discogsId: post1.discogsId,
+        postedBy: post1.postedBy,
+        postedAt: post1.postedAt,
+        content: post1.content
       });
     });
 

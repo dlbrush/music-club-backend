@@ -30,12 +30,10 @@ describe('User model', () => {
       expect(users.length).toEqual(2);
       expect(users[0]).toEqual({
         username: user1.username,
-        email: user1.email,
         profileImgUrl: user1.profileImgUrl
       });
       expect(users[1]).toEqual({
         username: user2.username,
-        email: user2.email,
         profileImgUrl: user2.profileImgUrl
       });
     });
@@ -45,7 +43,6 @@ describe('User model', () => {
       expect(users.length).toEqual(1);
       expect(users[0]).toEqual({
         username: user2.username,
-        email: user2.email,
         profileImgUrl: user2.profileImgUrl
       });
     });
@@ -62,7 +59,6 @@ describe('User model', () => {
       expect(users.length).toEqual(1);
       expect(users[0]).toEqual({
         username: user2.username,
-        email: user2.email,
         profileImgUrl: user2.profileImgUrl
       });
     });

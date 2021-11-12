@@ -30,6 +30,7 @@ describe('Club model', () => {
       const clubs = await Club.getAll();
       expect(clubs.length).toEqual(2);
       expect(clubs[0]).toEqual({
+        bannerImgUrl: club1.bannerImgUrl,
         id: club1.id,
         name: club1.name,
         description: club1.description,
@@ -37,6 +38,7 @@ describe('Club model', () => {
         isPublic: club1.isPublic
       });
       expect(clubs[1]).toEqual({
+        bannerImgUrl: club2.bannerImgUrl,
         id: club2.id,
         name: club2.name,
         description: club2.description,
@@ -45,10 +47,11 @@ describe('Club model', () => {
       });
     });
 
-    it('Returns only users matching passed name', async () => {
+    it('Returns only clubs matching passed name', async () => {
       const clubs = await Club.getAll(undefined, '2');
       expect(clubs.length).toEqual(1);
       expect(clubs[0]).toEqual({
+        bannerImgUrl: club2.bannerImgUrl,
         id: club2.id,
         name: club2.name,
         description: club2.description,
@@ -61,6 +64,7 @@ describe('Club model', () => {
       const clubs = await Club.getAll(true);
       expect(clubs.length).toEqual(1);
       expect(clubs[0]).toEqual({
+        bannerImgUrl: club1.bannerImgUrl,
         id: club1.id,
         name: club1.name,
         description: club1.description,

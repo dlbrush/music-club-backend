@@ -1,4 +1,5 @@
 const Post = require('../models/Post');
+const { BadRequestError, NotFoundError } = require('../helpers/errors');
 
 async function checkPost(req, res, next) {
   try {

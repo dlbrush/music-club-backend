@@ -1,7 +1,7 @@
 const jwt = require('jsonwebtoken');
 
 const { SECRET_KEY } = require('../config');
-const { UnauthenticatedError, UnauthorizedError, NotFoundError } = require('../helpers/errors');
+const { UnauthenticatedError, UnauthorizedError, NotFoundError, BadRequestError } = require('../helpers/errors');
 const Club = require('../models/Club');
 const Post = require('../models/Post');
 const Comment = require('../models/Comment');
@@ -48,26 +48,28 @@ function ensureLoggedIn(req, res, next) {
 // Pass in locations of club ID property based on strings for the name of the object attached to the req object (params, body, etc) and property of that object that contains the club ID
 // Ensure that the user is requesting a public club or a club they're a member of
 // If so, attach club to request while we're at it
-// Options: allowPublic, founderOnly
+// Options: allowPublic, founderOnly, adminSkipValidation
 function ensureAdminOrValidClub(objectName, property, options) {
   return async function(req, res, next) {
     try {
       const { admin, username } = req.user;
+      // Skip all other validation if admin should
+      if (admin && options['adminSkipValidation']) {
+        return next();
+      }
+
       const clubId = parseInt(req[objectName][property]);
-      console.log(clubId);
       if (!Number.isInteger(clubId)) {
         throw new BadRequestError('Club ID must be an integer.')
       }
       const club = await Club.get(clubId);
       if (!club) {
         throw new NotFoundError(`Club with ID ${clubId} not found.`);
-        // const e = new NotFoundError(`Club with ID ${clubId} not found.`);
-        // next(e);
       }
       req.club = club;
 
       // Check if this action is valid for any public club
-      const isPublic = options['allowPublic'] && club.isPublic === true;
+      const isPublic = options['allowPublic'] === true && club.isPublic === true;
 
       // Check if the user is a founder or member
       let validRole = false;
