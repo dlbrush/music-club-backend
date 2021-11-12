@@ -8,7 +8,7 @@ const { authenticateToken, ensureAdmin, ensureAdminOrSameUser, ensureLoggedIn, e
 const UserClub = require('../../models/UserClub');
 const { createTestObjects, clearDb } = require('../setup');
 
-describe('Middleware functions', () => {
+describe('Auth middleware functions', () => {
   let mockNext;
   let testObjects;
   let user1Req;
@@ -30,7 +30,7 @@ describe('Middleware functions', () => {
   afterEach(async () => {
     mockNext.mockReset();
     await clearDb();
-  })
+  });
 
   describe('authenticateToken', () => {
     let tokenReq;
