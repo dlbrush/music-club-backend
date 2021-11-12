@@ -17,8 +17,8 @@
   },
   "scripts": {
     "test": "jest -i",
-    "createdb": "psql < create-dbs.sql",
-    "seeddb": "psql < seed.sql"
+    "create-db": "psql < create-dbs.sql",
+    "seed-db": "node seed"
   },
   "repository": {
     "type": "git",

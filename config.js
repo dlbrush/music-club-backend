@@ -20,8 +20,6 @@ function getDatabaseUri() {
 const AUTH_DURATION = 86400000 //24hr
 
 // Discogs API info
-// const DISCOGS_CONSUMER_KEY = process.env.DISCOGS_CONSUMER_KEY;
-// const DISCOGS_CONSUMER_SECRET = process.env.DISCOGS_CONSUMER_SECRET;
 const DISCOGS_USER_AGENT = process.env.DISCOGS_USER_AGENT;
 const DISCOGS_ACCESS_TOKEN = process.env.DISCOGS_ACCESS_TOKEN;
 
