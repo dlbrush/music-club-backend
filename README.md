@@ -2,7 +2,7 @@
 
 An Express backend for the Music Club app.
 
-Frontend repo located here: [https://github.com/dlbrush/music-club-frontend]
+Frontend repo located here: [https://github.com/dlbrush/music-club-frontend](https://github.com/dlbrush/music-club-frontend)
 
 ## Seeding the DB
 
