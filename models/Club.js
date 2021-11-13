@@ -88,8 +88,6 @@ class Club {
     `, [clubId]);
     const clubInfo = result.rows[0];
     if (clubInfo) {
-      // Get club members if there are any
-      // const members = await MembershipService.getClubMembers(clubId);
       return new Club(clubInfo.id, clubInfo.name, clubInfo.description, clubInfo.founder, clubInfo.isPublic, clubInfo.bannerImgUrl, new Date(clubInfo.founded));
     }
     // Returns undefined if no club found

@@ -79,6 +79,34 @@ describe('Club model', () => {
     });
   });
 
+  describe('#getSome', () => {
+    it('Returns clubs matching passed IDs', async () => {
+      const clubs = await Club.getSome([club1.id, club2.id]);
+      expect(clubs.length).toEqual(2);
+      expect(clubs[0]).toEqual({
+        bannerImgUrl: club1.bannerImgUrl,
+        id: club1.id,
+        name: club1.name,
+        description: club1.description,
+        founder: club1.founder,
+        isPublic: club1.isPublic
+      });
+      expect(clubs[1]).toEqual({
+        bannerImgUrl: club2.bannerImgUrl,
+        id: club2.id,
+        name: club2.name,
+        description: club2.description,
+        founder: club2.founder,
+        isPublic: club2.isPublic
+      });
+    });
+
+    it('Returns empty array if no club IDs matched', async () => {
+      const clubs = await Club.getSome([9999]);
+      expect(clubs).toEqual([]);
+    });
+  })
+
   describe('#get', () => {
     it('Returns club matching passed id', async () => {
       const club = await Club.get(club1.id);

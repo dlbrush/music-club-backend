@@ -8,6 +8,7 @@ const Post = require('../models/Post');
 const Vote = require('../models/Vote');
 const { generateUserToken } = require('../helpers/auth');
 const AlbumGenre = require('../models/AlbumGenre');
+const Invitation = require('../models/Invitation');
 
 // Generate cookie strings for authorized requests
 const adminTokenCookie = `token=${generateUserToken('test1', true)}`;
@@ -73,6 +74,26 @@ async function seedDb() {
   const post2Data = postResult.rows[1];
   const post1 = new Post(post1Data.id, post1Data.clubId, post1Data.discogsId, new Date(post1Data.postedAt), post1Data.postedBy, post1Data.content, post1Data.recTracks);
   const post2 = new Post(post2Data.id, post2Data.clubId, post2Data.discogsId, new Date(post2Data.postedAt), post2Data.postedBy, post2Data.content, post2Data.recTracks);
+
+  const commentResult = await db.query(`
+    INSERT INTO comments (post_id, username, comment, posted_at)
+    VALUES ($1, $2, 'comment', current_timestamp), ($3, $4, 'comment 2', current_timestamp)
+    RETURNING id, post_id AS "postId", username, comment, posted_at AS "postedAt"
+  `, [post1.id, user1.username, post2.id, user2.username]);
+  const comment1Data = commentResult.rows[0];
+  const comment2Data = commentResult.rows[1];
+  const comment1 = new Comment(comment1Data.id, comment1Data.username, comment1Data.comment, comment1Data.postId, new Date(comment1Data.postedAt));
+  const comment2 = new Comment(comment2Data.id, comment2Data.username, comment2Data.comment, comment2Data.postId, new Date(comment2Data.postedAt));
+
+  const invitationResult = await db.query(`
+    INSERT INTO invitations (club_id, username, sent_from)
+    VALUES ($1, $2, $3), ($4, $3, $2)
+    RETURNING club_id AS "clubId", username, sent_from AS "sentFrom"
+  `, [club1.id, user2.username, user1.username, club2.id]);
+  const invitation1Data = invitationResult.rows[0];
+  const invitation2Data = invitationResult.rows[1];
+  const invitation1 = new Invitation(invitation1Data.clubId, invitation1Data.username, invitation1Data.sentFrom);
+  const invitation2 = new Invitation(invitation2Data.clubId, invitation2Data.username, invitation2Data.sentFrom);
   
   return {
     club1,
@@ -86,7 +107,11 @@ async function seedDb() {
     albumGenre1,
     albumGenre2,
     post1,
-    post2
+    post2,
+    comment1,
+    comment2,
+    invitation1,
+    invitation2
   }
 }
 
