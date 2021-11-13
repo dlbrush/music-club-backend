@@ -40,23 +40,8 @@ function handleUserClubFilters(username, clubId) {
   return { parameters, string }
 }
 
-function handleInvitationFilters(username, clubId) {
-  let parameters = [];
-  let string = '';
-  let paramCount = 0;
-  if (clubId) {
-    paramCount++;
-    string += `${addWhereOrAnd(string)} club_id=$${paramCount}`;
-    parameters.push(clubId);
-  }
-  if (username) {
-    paramCount++;
-    string = `${addWhereOrAnd(string)} username=$${paramCount}`;
-    parameters.push(username);
-  }
-  return { parameters, string }
-}
 
+// NOT IN USE
 function handleVoteFilters(postId, username) {
   let parameters = [];
   let string = '';
@@ -86,9 +71,9 @@ function makeGenreValuesList(genres) {
   let result = '';
   let genreParamCount = 1;
   function commaOrValues(string) {
-    return string.length ? ', ' : 'VALUES';
+    return string.length ? ',' : 'VALUES';
   }
-  genres.forEach(genre => {
+  genres.forEach(() => {
     genreParamCount++;
     result += `${commaOrValues(result)} ($1, $${genreParamCount})`;
   });
@@ -128,9 +113,10 @@ module.exports = {
   handleUserFilters,
   handleClubFilters,
   handleUserClubFilters,
-  handleInvitationFilters,
   handleVoteFilters,
   createParamList,
   makeGenreValuesList,
-  getOptionalPostColumns
+  getOptionalPostColumns,
+  addWhereOrAnd,
+  addWhereOrOr
 }

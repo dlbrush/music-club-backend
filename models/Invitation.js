@@ -9,7 +9,7 @@ class Invitation {
 
   // Static methods
 
-  static async getAll(username, clubId) {
+  static async getAll(username) {
     const params = username ? [username] : [];
     const filterString = username ? 'WHERE username = $1' : '';
 

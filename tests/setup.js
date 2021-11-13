@@ -7,6 +7,7 @@ const Album = require('../models/Album');
 const Post = require('../models/Post');
 const Vote = require('../models/Vote');
 const { generateUserToken } = require('../helpers/auth');
+const AlbumGenre = require('../models/AlbumGenre');
 
 // Generate cookie strings for authorized requests
 const adminTokenCookie = `token=${generateUserToken('test1', true)}`;
@@ -46,10 +47,22 @@ async function seedDb() {
 
   const albumResult = await db.query(`
   INSERT INTO albums (discogs_id, year, artist, title, cover_img_url)
-  VALUES (33170, 1994, 'Green Day', 'Dookie', 'https://img.discogs.com/_aD_ZCgjICJ9ilW_hdav_yk1tSo=/fit-in/600x600/filters:strip_icc():format(jpeg):mode_rgb():quality(90)/discogs-images/R-2103788-1507814667-9558.jpeg.jpg')
+  VALUES (33170, 1994, 'Green Day', 'Dookie', 'https://img.discogs.com/_aD_ZCgjICJ9ilW_hdav_yk1tSo=/fit-in/600x600/filters:strip_icc():format(jpeg):mode_rgb():quality(90)/discogs-images/R-2103788-1507814667-9558.jpeg.jpg'), (59536, 1985, 'Eagles', 'Best of Eagles', 'https://img.discogs.com/xpaKEZDatE2MSOxnqm7jSo4-KkU=/fit-in/481x480/filters:strip_icc():format(jpeg):mode_rgb():quality(90)/discogs-images/R-1662123-1247939788.jpeg.jpg')
   RETURNING discogs_id AS "discogsId", year, artist, title, cover_img_url AS "coverImgUrl"`);
-  const albumData = albumResult.rows[0];
-  const album1 = new Album(albumData.discogsId, albumData.year, albumData.artist, albumData.title, albumData.coverImgUrl);
+  const album1Data = albumResult.rows[0];
+  const album1 = new Album(album1Data.discogsId, album1Data.year, album1Data.artist, album1Data.title, album1Data.coverImgUrl);
+  const album2Data = albumResult.rows[1];
+  const album2 = new Album(album2Data.discogsId, album2Data.year, album2Data.artist, album2Data.title, album2Data.coverImgUrl);
+
+  const albumGenreResult = await db.query(`
+    INSERT INTO albums_genres (discogs_id, genre)
+    VALUES ($1, 'Rock'), ($1, 'Pop')
+    RETURNING discogs_id AS "discogsId", genre
+  `, [album1.discogsId]);
+  const albumGenre1Data = albumGenreResult.rows[0];
+  const albumGenre2Data = albumGenreResult.rows[1];
+  const albumGenre1 = new AlbumGenre(albumGenre1Data.discogsId, albumGenre1Data.genre);
+  const albumGenre2 = new AlbumGenre(albumGenre2Data.discogsId, albumGenre2Data.genre);
 
   const postResult = await db.query(`
     INSERT INTO posts (club_id, content, discogs_id, posted_by, posted_at, rec_tracks)
@@ -69,6 +82,9 @@ async function seedDb() {
     userClub1,
     userClub2,
     album1,
+    album2,
+    albumGenre1,
+    albumGenre2,
     post1,
     post2
   }

@@ -4,14 +4,20 @@ const { seedDb, clearDb } = require('../setup.js');
 
 describe('Album model', () => {
   let album1;
+  let album2;
 
   beforeEach(async () => {
     const items = await seedDb();
-    album1 = items.album1
+    album1 = items.album1;
+    album2 = items.album2;
   });
 
   afterEach(async () => {
     await clearDb();
+  });
+
+  afterAll(async () => {
+    await db.end();
   });
 
   describe('#get', () => {
@@ -29,6 +35,18 @@ describe('Album model', () => {
     it('Returns undefined if no album matching passed id', async () => {
       const album = await Album.get(9999);
       expect(album).toEqual(undefined);
+    });
+  });
+
+  describe('#getSome', () => {
+    it('Returns all albums from array of discogs IDs', async () => {
+      const albums = await Album.getSome([album1.discogsId, album2.discogsId]);
+      expect(albums).toEqual([album1, album2])
+    });
+
+    it('Returns empty array when no IDs matched', async () => {
+      const albums = await Album.getSome([9999]);
+      expect(albums).toEqual([]);
     });
   });
 
@@ -50,9 +68,4 @@ describe('Album model', () => {
       expect(dbAlbum).toEqual(album);
     });
   });
-
-
-  afterAll(async () => {
-    await db.end();
-  });
-})
+});

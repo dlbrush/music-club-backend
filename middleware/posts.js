@@ -7,6 +7,7 @@ async function checkPost(req, res, next) {
     if (!Number.isInteger(postId)) {
       throw new BadRequestError('Post ID must be an integer.')
     }
+    
     const post = await Post.get(postId);
     if (!post) {
       throw new NotFoundError(`Post with ID ${postId} not found.`);
