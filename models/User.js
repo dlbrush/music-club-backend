@@ -17,12 +17,11 @@ class User {
 
   /**
    * Get all users from the DB.
-   * Optionally, pass a club ID to only get users in the club with the passed ID.
-   * @param {number} clubId 
+   * Optionally, pass a username to search for users
+   * @param {string} username 
    * @returns {User[]} (with no admin)
    */
   static async getAll(username) {
-    // Include club filter string and parameter only if an ID has been passed
     const filters = handleUserFilters(username);
 
     const result = await db.query(`
@@ -37,7 +36,6 @@ class User {
   }
 
   static async getSome(usernames) {
-    // Include club filter string and parameter only if an ID has been passed
     const paramList = createParamList(usernames, 'username');
 
     const result = await db.query(`

@@ -2,7 +2,7 @@ const request = require('supertest');
 
 const app = require("../../app");
 const db = require('../../db');
-const { clearDb, createTestObjects, adminTokenCookie, userTokenCookie } = require('../setup');
+const { clearDb, createTestObjects, } = require('../setup');
 const User = require('../../models/User');
 
 describe('auth routes', () => {

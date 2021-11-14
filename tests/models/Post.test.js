@@ -4,12 +4,13 @@ const { seedDb, clearDb } = require('../setup.js');
 
 describe('Post model', () => {
   // Declare test items
-  let user1, club1, album1, post1, post2;
+  let user1, club1, club2, album1, post1, post2;
 
   beforeEach(async () => {
     const items = await seedDb();
     user1 = items.user1;
     club1 = items.club1;
+    club2 = items.club2;
     album1 = items.album1;
     post1 = items.post1;
     post2 = items.post2;
@@ -56,6 +57,51 @@ describe('Post model', () => {
 
     it('Returns empty array if no matches to filters', async () => {
       const posts = await Post.getAll(9999);
+      expect(posts).toEqual([]);
+    });
+  });
+
+  describe('#getAllForClubs', () => {
+    it('Returns all posts made in the clubs matching passed IDs', async () => {
+      const posts = await Post.getAllForClubs([club1.id, club2.id]);
+      expect(posts.length).toEqual(2);
+      expect(posts[0]).toEqual({
+        id: post2.id,
+        clubId: post2.clubId,
+        discogsId: post2.discogsId,
+        postedBy: post2.postedBy,
+        postedAt: post2.postedAt,
+        content: post2.content
+      });
+      expect(posts[1]).toEqual({
+        id: post1.id,
+        clubId: post1.clubId,
+        discogsId: post1.discogsId,
+        postedBy: post1.postedBy,
+        postedAt: post1.postedAt,
+        content: post1.content
+      });
+
+      // One extra check to see that we're not always returning all posts
+      const postsForOne = await Post.getAllForClubs([club1.id]);
+      expect(postsForOne.length).toEqual(1);
+      expect(postsForOne[0]).toEqual({
+        id: post1.id,
+        clubId: post1.clubId,
+        discogsId: post1.discogsId,
+        postedBy: post1.postedBy,
+        postedAt: post1.postedAt,
+        content: post1.content
+      });
+    });
+
+    it('Returns empty array if no matches', async () => {
+      const posts = await Post.getAllForClubs([9999]);
+      expect(posts).toEqual([]);
+    });
+
+    it('Returns empty array if no IDs passed', async () => {
+      const posts = await Post.getAllForClubs([]);
       expect(posts).toEqual([]);
     });
   });

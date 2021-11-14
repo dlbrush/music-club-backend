@@ -46,7 +46,6 @@ class DiscogsService {
   static async albumSearch(title, artist) {
     // Send album search request to discogs API
     try {
-      console.log('Am I here');
       const response = await axios.get(`${discogsBaseUrl}/database/search?type=master&release_title=${title}&artist=${artist}`, requestConfig);
       // Return array of specific data from results
       return response.data.results.map(album => {
@@ -59,7 +58,6 @@ class DiscogsService {
         }
       })
     } catch(e) {
-      console.log(e);
       throw e
     }
   }
