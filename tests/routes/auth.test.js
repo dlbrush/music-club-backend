@@ -2,25 +2,24 @@ const request = require('supertest');
 
 const app = require("../../app");
 const db = require('../../db');
-const { clearDb, createTestObjects, } = require('../setup');
+const { clearDb, createTestObjects, userTokenCookie } = require('../setup');
 const User = require('../../models/User');
 
 describe('auth routes', () => {
-  let user1;
-  let user2;
-  let club1;
-  let club2;
+  let user1, user2;
 
   beforeEach(async () => {
     const testObjects = await createTestObjects();
     user1 = testObjects.user1;
     user2 = testObjects.user2;
-    club1 = testObjects.club1;
-    club2 = testObjects.club2;
   });
 
   afterEach(async () => {
     await clearDb();
+  });
+
+  afterAll(async () => {
+    await db.end();
   });
 
   describe('POST /register', () => {
@@ -28,10 +27,10 @@ describe('auth routes', () => {
 
     beforeEach(() => {
       testRegisterBody = {
-        username: 'test3',
-        password: 'test3',
-        email: 'test3@test.com',
-        profileImgUrl: 'https://test.com/3.jpg'
+        username: 'test4',
+        password: 'test4',
+        email: 'test4@test.com',
+        profileImgUrl: 'https://test.com/4.jpg'
       }
     });
 
@@ -217,7 +216,48 @@ describe('auth routes', () => {
     });
   });
 
-  afterAll(async () => {
-    await db.end();
+  describe('/check POST', () => {
+    it('Returns user data when cookie is attached', async () => {
+      const response = await request(app)
+                             .post('/auth/check')
+                             .set('Cookie', userTokenCookie);
+      expect(response.status).toEqual(200);
+      expect(response.body).toEqual({
+        user: {
+          username: user2.username,
+          admin: user2.admin,
+          iat: expect.any(Number)
+        }
+      });
+    });
+
+    it('Throws error when no valid cookie attached', async () => {
+      const response = await request(app)
+                             .post('/auth/check');
+      expect(response.status).toEqual(401);
+      expect(response.body).toEqual({
+        error: {
+          status: 401,
+          message: 'JWT not found'
+        }
+      });
+    });
   });
-})
+
+  describe('/logout POST', () => {
+    it('Sets token to empty string', async () => {
+      const response = await request(app)
+                             .post('/auth/logout');
+      expect(response.status).toEqual(200);
+      expect(response.headers['set-cookie'][0]).toContain('token=;');
+    });
+
+    it('Returns message on success', async () => {
+      const response = await request(app)
+                             .post('/auth/logout');
+      expect(response.body).toEqual({
+        message: 'Successfully logged out.'
+      });
+    });
+  });
+});
