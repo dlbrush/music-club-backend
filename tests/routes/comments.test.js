@@ -10,7 +10,6 @@ describe('comments routes', () => {
   let comment1;
 
   beforeEach(async () => {
-    await clearDb();
     const testObjects = await createTestObjects();
     comment1 = testObjects.comment1;
   });
