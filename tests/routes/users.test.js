@@ -6,19 +6,25 @@ const { clearDb, createTestObjects, adminTokenCookie, user2TokenCookie } = requi
 const { DEFAULT_PROFILE_IMG } = require('../../helpers/constants');
 const User = require('../../models/User');
 const UserClub = require('../../models/UserClub');
+const Invitation = require('../../models/Invitation');
 
 describe('users routes', () => {
   let user1;
   let user2;
+  let user3;
   let club1;
   let club2;
+  let invitation2;
 
   beforeEach(async () => {
     const testObjects = await createTestObjects();
     user1 = testObjects.user1;
     user2 = testObjects.user2;
+    user3 = testObjects.user3;
     club1 = testObjects.club1;
     club2 = testObjects.club2;
+    invitation2 = testObjects.invitation2;
+    invitation1 = testObjects.invitation1;
   });
 
   afterEach(async () => {
@@ -40,7 +46,12 @@ describe('users routes', () => {
           {
             username: user2.username,
             profileImgUrl: user2.profileImgUrl
+          },
+          {
+            username: user3.username,
+            profileImgUrl: user3.profileImgUrl
           }
+          
         ]
       })
     });
@@ -93,7 +104,19 @@ describe('users routes', () => {
           email: user2.email,
           admin: user2.admin,
           profileImgUrl: user2.profileImgUrl,
-          invitations: [],
+          invitations: [
+            {
+              ...invitation1,
+              club: {
+                id: club1.id,
+                bannerImgUrl: club1.bannerImgUrl,
+                description: club1.description,
+                founder: club1.founder,
+                isPublic: club1.isPublic,
+                name: club1.name
+              }
+            }
+          ],
           clubs: [
             {
               bannerImgUrl: club2.bannerImgUrl,
@@ -119,7 +142,19 @@ describe('users routes', () => {
           email: user2.email,
           admin: user2.admin,
           profileImgUrl: user2.profileImgUrl,
-          invitations: [],
+          invitations: [
+            {
+              ...invitation1,
+              club: {
+                id: club1.id,
+                bannerImgUrl: club1.bannerImgUrl,
+                description: club1.description,
+                founder: club1.founder,
+                isPublic: club1.isPublic,
+                name: club1.name
+              }
+            }
+          ],
           clubs: [
             {
               bannerImgUrl: club2.bannerImgUrl,
@@ -166,10 +201,10 @@ describe('users routes', () => {
 
     beforeEach(() => {
       testCreateBody = {
-        username: 'test3',
-        password: 'test3',
-        email: 'test3@test.com',
-        profileImgUrl: 'https://test.com/3.jpg',
+        username: 'test4',
+        password: 'test4',
+        email: 'test4@test.com',
+        profileImgUrl: 'https://test.com/4.jpg',
         admin: true
       }
     });
@@ -311,26 +346,23 @@ describe('users routes', () => {
       });
     });
 
-    it('Adds UserClub to database on success', async () => {
+    it('Adds UserClub to database on success for same user', async () => {
       const response = await request(app)
-                              .post(`/users/${user1.username}/join-club/${club2.id}`)
-                              .set('Cookie', adminTokenCookie);
-      const userClub = await UserClub.get(user1.username, club2.id);
+                              .post(`/users/${user2.username}/join-club/${club1.id}`)
+                              .set('Cookie', user2TokenCookie);
+      const userClub = await UserClub.get(user2.username, club1.id);
       expect(userClub).toEqual({
-        username: user1.username,
-        clubId: club2.id
+        username: user2.username,
+        clubId: club1.id
       });
     });
 
-    it('Adds UserClub to database on success', async () => {
+    it('Deletes invitation to joining user from the database on success', async () => {
       const response = await request(app)
                               .post(`/users/${user1.username}/join-club/${club2.id}`)
                               .set('Cookie', adminTokenCookie);
-      const userClub = await UserClub.get(user1.username, club2.id);
-      expect(userClub).toEqual({
-        username: user1.username,
-        clubId: club2.id
-      });
+      const invitations = await Invitation.getAll(user1.username, club2.id);
+      expect(invitations).toHaveLength(0);
     });
 
     it('Returns an error if clubId is not an integer', async () => {

@@ -1,5 +1,6 @@
 const Vote = require('../models/Vote');
 
+// This module is not currently in use as Votes are not supported by the front end right now
 class VoteService {
   static async handleVote(postId, username, liked) {
     // Check if user has already voted on this post

@@ -11,7 +11,7 @@ const Comment = require('../models/Comment');
 const MembershipService = require('../services/MembershipService');
 const VoteService = require('../services/VoteService');
 const { validateRequest } = require('../helpers/validation');
-const { ensureLoggedIn, ensureAdminOrValidClub, ensureAdminOrSameUser, ensureAdminOrPoster } = require('../middleware/auth');
+const { ensureLoggedIn, ensureAdminOrValidClub, ensureAdminOrSameUser, ensureAdminOrPoster, ensureAdmin } = require('../middleware/auth');
 const { checkPost } = require('../middleware/posts');
 const updatePostSchema = require('../schemas/updatePost.json');
 
@@ -112,7 +112,7 @@ router.get('/recent/:username', ensureLoggedIn, ensureAdminOrSameUser, async fun
 
 // NOT CURRENTLY IN USE
 // Create a vote on a post or update an existing vote. Type parameter can be 'up' or 'down'.
-router.post('/:postId/vote/:type', ensureLoggedIn, async function(req, res, next) {
+router.post('/:postId/vote/:type', ensureAdmin, async function(req, res, next) {
   try {
     // First check that post ID is valid
     const postId = parseInt(req.params.postId);
@@ -136,10 +136,11 @@ router.post('/:postId/vote/:type', ensureLoggedIn, async function(req, res, next
     }
 
     // Check that requesting user is in club where post was made
-    const isMember = await MembershipService.checkMembership(req.user.username, post.clubId);
-    if (!isMember) {
-      throw new UnauthorizedError(`Sorry, you must be a member of club with ID ${post.clubId} to vote on post ${postId}`);
-    }
+    // Check is not currently relevant if user is admin
+    // const isMember = await MembershipService.checkMembership(req.user.username, post.clubId);
+    // if (!isMember) {
+    //   throw new UnauthorizedError(`Sorry, you must be a member of club with ID ${post.clubId} to vote on post ${postId}`);
+    // }
 
     // Finally, send upvote
     const message = await VoteService.handleVote(postId, req.user.username, liked);
