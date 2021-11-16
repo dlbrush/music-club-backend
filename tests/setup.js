@@ -12,7 +12,8 @@ const Invitation = require('../models/Invitation');
 
 // Generate cookie strings for authorized requests
 const adminTokenCookie = `token=${generateUserToken('test1', true)}`;
-const userTokenCookie = `token=${generateUserToken('test2', false)}`;
+const user2TokenCookie = `token=${generateUserToken('test2', false)}`;
+const user3TokenCookie = `token=${generateUserToken('test3', false)}`
 
 async function seedDb() {
   const result = await db.query(`
@@ -129,6 +130,8 @@ async function createTestObjects() {
   const post2 = await Post.create(club2.id, album1.discogsId, user2.username, 'Test Track', 'Check this out');
   const vote1 = await Vote.create(post2.id, user2.username, true);
   const comment1 = await Comment.create(user2.username, 'Comment', post2.id);
+  const invitation1 = await Invitation.create(club1.id, user2.username, user1.username);
+  const invitation2 = await Invitation.create(club2.id, user1.username, user2.username);
   return {
     user1,
     user2,
@@ -141,7 +144,9 @@ async function createTestObjects() {
     post1,
     post2,
     vote1,
-    comment1
+    comment1,
+    invitation1,
+    invitation2
   }
 }
 
@@ -153,6 +158,8 @@ async function clearDb() {
   await db.query('DELETE FROM posts');
   await db.query('DELETE FROM albums_genres');
   await db.query('DELETE FROM votes');
+  await db.query('DELETE FROM invitations');
+  await db.query('DELETE FROM comments');
 }
 
 module.exports = {
@@ -160,5 +167,6 @@ module.exports = {
   createTestObjects,
   clearDb,
   adminTokenCookie,
-  userTokenCookie
+  user2TokenCookie,
+  user3TokenCookie
 }

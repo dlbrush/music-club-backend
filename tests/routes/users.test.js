@@ -2,7 +2,7 @@ const request = require('supertest');
 
 const app = require("../../app");
 const db = require('../../db');
-const { clearDb, createTestObjects, adminTokenCookie, userTokenCookie } = require('../setup');
+const { clearDb, createTestObjects, adminTokenCookie, user2TokenCookie } = require('../setup');
 const { DEFAULT_PROFILE_IMG } = require('../../helpers/constants');
 const User = require('../../models/User');
 const UserClub = require('../../models/UserClub');
@@ -29,7 +29,7 @@ describe('users routes', () => {
     it('Returns all users for authorized user when no query string passed', async () => {
       const response = await request(app)
                              .get('/users')
-                             .set('Cookie', userTokenCookie);
+                             .set('Cookie', user2TokenCookie);
       expect(response.status).toEqual(200);
       expect(response.body).toEqual({
         users: [
@@ -48,7 +48,7 @@ describe('users routes', () => {
     it('Returns only users containing passed username string', async () => {
       const response = await request(app)
                              .get('/users?username=1')
-                             .set('Cookie', userTokenCookie);
+                             .set('Cookie', user2TokenCookie);
       expect(response.status).toEqual(200);
       expect(response.body).toEqual({
         users: [
@@ -63,7 +63,7 @@ describe('users routes', () => {
     it('Returns empty array in user object when no users matched', async () => {
       const response = await request(app)
                              .get('/users?username=abc')
-                             .set('Cookie', userTokenCookie);
+                             .set('Cookie', user2TokenCookie);
       expect(response.status).toEqual(200);
       expect(response.body).toEqual({ users: []});
     });
@@ -111,7 +111,7 @@ describe('users routes', () => {
     it('Returns details of passed username for same user', async () => {
       const response = await request(app)
                              .get('/users/test2')
-                             .set('Cookie', userTokenCookie);
+                             .set('Cookie', user2TokenCookie);
       expect(response.status).toEqual(200);
       expect(response.body).toEqual({
         user: {
@@ -150,7 +150,7 @@ describe('users routes', () => {
     it('Throws unauthorized error when user is not admin or user in route', async () => {
       const response = await request(app)
                              .get('/users/test1')
-                             .set('Cookie', userTokenCookie);
+                             .set('Cookie', user2TokenCookie);
       expect(response.status).toEqual(403);
       expect(response.body).toEqual({
         error: {
@@ -391,7 +391,7 @@ describe('users routes', () => {
     it('Responds with message and updated user on success for the user in the route', async () => {
       const response = await request(app)
                               .patch(`/users/${user2.username}`)
-                              .set('Cookie', userTokenCookie)
+                              .set('Cookie', user2TokenCookie)
                               .send(updateUserBody);
       expect(response.status).toEqual(200);
       expect(response.body).toEqual({
@@ -479,7 +479,7 @@ describe('users routes', () => {
     it('Returns message on success for own user', async () => {
       const response = await request(app)
                               .delete(`/users/${user2.username}`)
-                              .set('Cookie', userTokenCookie);
+                              .set('Cookie', user2TokenCookie);
       expect(response.status).toEqual(200);
       expect(response.body).toEqual({
         message: `Deleted user ${user2.username}.`

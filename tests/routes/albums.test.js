@@ -3,7 +3,7 @@ const request = require('supertest');
 const app = require("../../app");
 const db = require('../../db');
 const DiscogsService = require('../../services/DiscogsService');
-const { userTokenCookie } = require('../setup');
+const { user2TokenCookie } = require('../setup');
 
 describe('albums routes', () => {
   describe('/search GET', () => {
@@ -27,7 +27,7 @@ describe('albums routes', () => {
     it('Returns results of album search based on query string', async () => {
       const response = await request(app)
                              .get('/albums/search?title=album&artist=person')
-                             .set('Cookie', userTokenCookie);
+                             .set('Cookie', user2TokenCookie);
       expect(response.status).toEqual(200);
       expect(response.body).toEqual({
         albums: [
@@ -42,7 +42,7 @@ describe('albums routes', () => {
     it("Searches with empty strings if query keys aren't used", async () => {
       const response = await request(app)
                              .get('/albums/search')
-                             .set('Cookie', userTokenCookie);
+                             .set('Cookie', user2TokenCookie);
       expect(response.status).toEqual(200);
       expect(response.body).toEqual({
         albums: [

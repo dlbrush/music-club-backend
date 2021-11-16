@@ -1,4 +1,5 @@
 const db = require('../db');
+const { handleUserClubFilters } = require('../helpers/sql');
 
 class Invitation {
   constructor(clubId, username, sentFrom) {
@@ -9,15 +10,14 @@ class Invitation {
 
   // Static methods
 
-  static async getAll(username) {
-    const params = username ? [username] : [];
-    const filterString = username ? 'WHERE username = $1' : '';
+  static async getAll(username, clubId) {
+    const { parameters, string } = handleUserClubFilters(username, clubId)
 
     const result = await db.query(`
       SELECT club_id AS "clubId", username, sent_from AS "sentFrom"
       FROM invitations
-      ${filterString}
-    `, params);
+      ${string}
+    `, parameters);
 
     return result.rows.map(invitation => {
       return new Invitation(invitation.clubId, invitation.username, invitation.sentFrom);

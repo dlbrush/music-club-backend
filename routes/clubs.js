@@ -14,7 +14,7 @@ const clubSearchSchema = require('../schemas/clubSearch.json');
 const updateClubSchema = require('../schemas/updateClub.json');
 const newPostSchema = require('../schemas/newPost.json');
 const { validateRequest } = require('../helpers/validation');
-const { ensureLoggedIn, ensureAdmin, ensureAdminOrValidClub } = require('../middleware/auth');
+const { ensureLoggedIn, ensureAdminOrValidClub } = require('../middleware/auth');
 
 const router = new express.Router();
 
@@ -62,17 +62,8 @@ router.get('/:clubId', ensureLoggedIn, ensureAdminOrValidClub('params', 'clubId'
 // Get all invitations to a given club
 router.get('/:clubId/invitations', ensureLoggedIn, ensureAdminOrValidClub('params', 'clubId', {allowPublic: true}), async function(req, res, next) {
   try {
-    const clubId = parseInt(req.params.clubId);
-    if (!Number.isInteger(clubId)) {
-      throw new BadRequestError('Club ID must be an integer.')
-    }
-    const club = await Club.get(clubId);
-    if (!club) {
-      throw new NotFoundError(`Club with ID ${clubId} not found.`);
-    }
-
     // Get invited users based on Invitation records
-    const invitations = await Invitation.getAll(undefined, clubId);
+    const invitations = await Invitation.getAll(undefined, req.club.id);
 
     return res.json({ invitations })
   } catch(e) {

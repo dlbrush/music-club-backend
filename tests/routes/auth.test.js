@@ -2,7 +2,7 @@ const request = require('supertest');
 
 const app = require("../../app");
 const db = require('../../db');
-const { clearDb, createTestObjects, userTokenCookie } = require('../setup');
+const { clearDb, createTestObjects, user2TokenCookie } = require('../setup');
 const User = require('../../models/User');
 
 describe('auth routes', () => {
@@ -220,7 +220,7 @@ describe('auth routes', () => {
     it('Returns user data when cookie is attached', async () => {
       const response = await request(app)
                              .post('/auth/check')
-                             .set('Cookie', userTokenCookie);
+                             .set('Cookie', user2TokenCookie);
       expect(response.status).toEqual(200);
       expect(response.body).toEqual({
         user: {

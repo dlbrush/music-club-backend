@@ -2,12 +2,13 @@ const request = require('supertest');
 
 const app = require("../../app");
 const db = require('../../db');
-const { clearDb, createTestObjects, userTokenCookie, adminTokenCookie } = require('../setup');
+const { clearDb, createTestObjects, user2TokenCookie, adminTokenCookie, user3TokenCookie } = require('../setup');
 const { DEFAULT_BANNER_IMG } = require('../../helpers/constants');
 const Club = require('../../models/Club');
 const DiscogsService = require('../../services/DiscogsService');
 const Album = require('../../models/Album');
 const Post = require('../../models/Post');
+const UserClub = require('../../models/UserClub');
 
 describe('clubs routes', () => {
   let user1;
@@ -15,6 +16,8 @@ describe('clubs routes', () => {
   let club1;
   let club2;
   let album1;
+  let invitation1;
+  let invitation2;
 
   beforeEach(async () => {
     const testObjects = await createTestObjects();
@@ -23,6 +26,8 @@ describe('clubs routes', () => {
     club1 = testObjects.club1;
     club2 = testObjects.club2;
     album1 = testObjects.album1;
+    invitation1 = testObjects.invitation1;
+    invitation2 = testObjects.invitation2;
   });
 
   afterEach(async () => {
@@ -60,7 +65,7 @@ describe('clubs routes', () => {
     it('Returns only public clubs if public=true (in any case) is passed', async () => {
       const response = await request(app)
                              .get('/clubs?isPublic=True')
-                             .set('Cookie', userTokenCookie);
+                             .set('Cookie', user2TokenCookie);
       expect(response.status).toEqual(200);
       expect(response.body).toEqual({
         clubs: [
@@ -98,7 +103,7 @@ describe('clubs routes', () => {
     it('Returns empty array in clubs object when no clubs match query', async () => {
       const response = await request(app)
                              .get('/clubs?name=abc&isPublic=true')
-                             .set('Cookie', userTokenCookie);
+                             .set('Cookie', user2TokenCookie);
       expect(response.status).toEqual(200);
       expect(response.body).toEqual({ clubs: []});
     });
@@ -142,7 +147,31 @@ describe('clubs routes', () => {
       });
     });
 
-    it('Returns NotFoundError if username does not exist', async () => {
+    it('Returns details of club for user in club at passed ID if it exists', async () => {
+      const response = await request(app)
+                             .get(`/clubs/${club2.id}`)
+                             .set('Cookie', user2TokenCookie);
+      expect(response.status).toEqual(200);
+      expect(response.body).toEqual({
+        club: {
+          id: club2.id,
+          name: club2.name,
+          description: club2.description,
+          founder: club2.founder,
+          isPublic: club2.isPublic,
+          founded: club2.founded.toISOString(),
+          bannerImgUrl: club2.bannerImgUrl,
+          members: [
+            {
+            username: user2.username, 
+            profileImgUrl: user2.profileImgUrl
+            }
+          ]
+        }
+      });
+    });
+
+    it('Returns NotFoundError if club does not exist', async () => {
       const response = await request(app)
                              .get('/clubs/9999')
                              .set('Cookie', adminTokenCookie);
@@ -167,6 +196,45 @@ describe('clubs routes', () => {
         }
       });
     })
+  });
+
+  describe('/:clubId/invitations GET', () => {
+    it('Returns invitation list for passed club ID for admin', async () => {
+      const response = await request(app)
+                             .get(`/clubs/${club2.id}/invitations`)
+                             .set('Cookie', adminTokenCookie);
+      expect(response.status).toEqual(200);
+      expect(response.body).toEqual({
+        invitations: [ invitation2 ]
+      });
+    });
+
+    it('Returns invitation list for passed club ID for user in club', async () => {
+      const response = await request(app)
+                             .get(`/clubs/${club2.id}/invitations`)
+                             .set('Cookie', user2TokenCookie);
+      expect(response.status).toEqual(200);
+      expect(response.body).toEqual({
+        invitations: [ invitation2 ]
+      });
+    });
+
+    it('Returns invitation list for passed club ID for any user if club is public', async () => {
+      const response = await request(app)
+                             .get(`/clubs/${club1.id}/invitations`)
+                             .set('Cookie', user2TokenCookie);
+      expect(response.status).toEqual(200);
+      expect(response.body).toEqual({
+        invitations: [ invitation1 ]
+      });
+    });
+
+    it('Returns error for user not in private club', async () => {
+      const response = await request(app)
+                             .get(`/clubs/${club2.id}/invitations`)
+                             .set('Cookie', user3TokenCookie);
+      expect(response.status).toEqual(403);
+    });
   });
 
   describe('POST /', () => {
@@ -201,6 +269,28 @@ describe('clubs routes', () => {
         }
       });
     });
+
+    it('Adds club and membership records to database on success', async () => {
+      const response = await request(app)
+                              .post('/clubs')
+                              .set('Cookie', adminTokenCookie)
+                              .send(testCreateBody);
+      const club = await Club.get(response.body.newClub.id);
+      const userClub = await UserClub.get(testCreateBody.founder, response.body.newClub.id);
+      expect(club).toEqual({
+          id: response.body.newClub.id,
+          name: testCreateBody.name,
+          description: testCreateBody.description,
+          founder: testCreateBody.founder,
+          bannerImgUrl: testCreateBody.bannerImgUrl,
+          isPublic: true,
+          founded: expect.any(Date)
+      });
+      expect(userClub).toEqual({
+        username: testCreateBody.founder, 
+        clubId: response.body.newClub.id
+      })
+    })
 
     it('Returns default values if bannerImgUrl is not defined in request', async () => {
       delete testCreateBody.bannerImgUrl;
@@ -298,7 +388,7 @@ describe('clubs routes', () => {
     it('Returns new post for logged in user who is in the club being posted to', async () => {
       const response = await request(app)
                              .post(`/clubs/${club2.id}/new-post`)
-                             .set('Cookie', userTokenCookie)
+                             .set('Cookie', user2TokenCookie)
                              .send(newPostBody);
       expect(response.status).toEqual(201);
       expect(response.body).toEqual({
@@ -317,7 +407,7 @@ describe('clubs routes', () => {
     it('Adds post to DB on success', async () => {
       const response = await request(app)
                              .post(`/clubs/${club2.id}/new-post`)
-                             .set('Cookie', userTokenCookie)
+                             .set('Cookie', user2TokenCookie)
                              .send(newPostBody);
       const { newPost } = response.body;
       const dbPost = await Post.get(newPost.id);
@@ -341,7 +431,7 @@ describe('clubs routes', () => {
       newPostBody.discogsId = 9999;
       const response = await request(app)
                              .post(`/clubs/${club2.id}/new-post`)
-                             .set('Cookie', userTokenCookie)
+                             .set('Cookie', user2TokenCookie)
                              .send(newPostBody);
       expect(response.status).toEqual(201);
       expect(response.body).toEqual({
@@ -373,7 +463,7 @@ describe('clubs routes', () => {
     it('Returns bad request error for club ID that is not an integer', async () => {
       const response = await request(app)
                              .post(`/clubs/abc/new-post`)
-                             .set('Cookie', userTokenCookie)
+                             .set('Cookie', user2TokenCookie)
                              .send(newPostBody);
       expect(response.status).toEqual(400);
       expect(response.body).toEqual({
@@ -387,7 +477,7 @@ describe('clubs routes', () => {
     it('Returns not found error for club ID not in DB', async () => {
       const response = await request(app)
                              .post(`/clubs/9999/new-post`)
-                             .set('Cookie', userTokenCookie)
+                             .set('Cookie', user2TokenCookie)
                              .send(newPostBody);
       expect(response.status).toEqual(404);
       expect(response.body).toEqual({
@@ -402,7 +492,7 @@ describe('clubs routes', () => {
       newPostBody.discogsId = 'abc';
       const response = await request(app)
                              .post(`/clubs/${club2.id}/new-post`)
-                             .set('Cookie', userTokenCookie)
+                             .set('Cookie', user2TokenCookie)
                              .send(newPostBody);
       expect(response.status).toEqual(400);
       expect(response.body).toEqual({
@@ -416,7 +506,7 @@ describe('clubs routes', () => {
     it('Returns unauthorized error when user is not a member of the club in the route', async () => {
       const response = await request(app)
                              .post(`/clubs/${club1.id}/new-post`)
-                             .set('Cookie', userTokenCookie)
+                             .set('Cookie', user2TokenCookie)
                              .send(newPostBody);
       expect(response.status).toEqual(403);
       expect(response.body).toEqual({
@@ -463,7 +553,7 @@ describe('clubs routes', () => {
     it('Updates club in the DB for founder', async () => {
       const response = await request(app)
                               .patch(`/clubs/${club2.id}`)
-                              .set('Cookie', userTokenCookie)
+                              .set('Cookie', user2TokenCookie)
                               .send(updateClubBody);
       const club = await Club.get(club2.id);
       expect(club).toEqual({
@@ -551,7 +641,7 @@ describe('clubs routes', () => {
     it('Deletes user from DB on success for club founder', async () => {
       const response = await request(app)
                               .delete(`/clubs/${club2.id}`)
-                              .set('Cookie', userTokenCookie);
+                              .set('Cookie', user2TokenCookie);
       const club = await Club.get(club2.id);
       expect(club).toEqual(undefined);
     });

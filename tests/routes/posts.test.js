@@ -4,7 +4,7 @@ const request = require('supertest');
 const app = require('../../app');
 const db = require('../../db');
 const Post = require('../../models/Post');
-const { createTestObjects, clearDb, adminTokenCookie, userTokenCookie } = require('../setup');
+const { createTestObjects, clearDb, adminTokenCookie, user2TokenCookie } = require('../setup');
 
 
 describe('posts routes', () => {
@@ -79,7 +79,7 @@ describe('posts routes', () => {
     it('Returns only posts in passed club ID for user in club', async () => {
       const response = await request(app)
                              .get(`/posts?clubId=${club2.id}`)
-                             .set('Cookie', userTokenCookie);
+                             .set('Cookie', user2TokenCookie);
       expect(response.status).toEqual(200);
       expect(response.body.posts.length).toEqual(1);
       expect(response.body).toEqual({
@@ -117,7 +117,7 @@ describe('posts routes', () => {
     it('Returns post details on success for user in club', async () => {
       const response = await request(app)
                              .get(`/posts/${post2.id}`)
-                             .set('Cookie', userTokenCookie);
+                             .set('Cookie', user2TokenCookie);
       expect(response.status).toEqual(200);
       expect(response.body).toEqual({
         post: {
@@ -165,7 +165,7 @@ describe('posts routes', () => {
     it('Returns error when post ID is not an integer', async () => {
       const response = await request(app)
                              .get('/posts/abc')
-                             .set('Cookie', userTokenCookie);
+                             .set('Cookie', user2TokenCookie);
       expect(response.status).toEqual(400);
       expect(response.body).toEqual({
         error: {
@@ -178,7 +178,7 @@ describe('posts routes', () => {
     it('Returns error when post ID is not in database', async () => {
       const response = await request(app)
                              .get('/posts/9999')
-                             .set('Cookie', userTokenCookie);
+                             .set('Cookie', user2TokenCookie);
       expect(response.status).toEqual(404);
       expect(response.body).toEqual({
         error: {
@@ -203,7 +203,7 @@ describe('posts routes', () => {
     it('Returns change message on valid changed vote', async () => {
       const response = await request(app)
                              .post(`/posts/${post2.id}/vote/down`)
-                             .set('Cookie', userTokenCookie);
+                             .set('Cookie', user2TokenCookie);
       expect(response.status).toEqual(200);
       expect(response.body).toEqual({
         message: `Successfully changed vote by ${user2.username} on post ${post2.id}. User has now downvoted this post.`
@@ -213,7 +213,7 @@ describe('posts routes', () => {
     it('Returns bad request error when postId is not an integer', async () => {
       const response = await request(app)
                              .post(`/posts/abc/vote/down`)
-                             .set('Cookie', userTokenCookie);
+                             .set('Cookie', user2TokenCookie);
       expect(response.status).toEqual(400);
       expect(response.body).toEqual({
         error: {
@@ -226,7 +226,7 @@ describe('posts routes', () => {
     it('Returns bad request error when postId is not in DB', async () => {
       const response = await request(app)
                              .post(`/posts/9999/vote/down`)
-                             .set('Cookie', userTokenCookie);
+                             .set('Cookie', user2TokenCookie);
       expect(response.status).toEqual(404);
       expect(response.body).toEqual({
         error: {
@@ -239,7 +239,7 @@ describe('posts routes', () => {
     it('Returns bad request error if vote type is not up or down', async () => {
       const response = await request(app)
                              .post(`/posts/${post2.id}/vote/both`)
-                             .set('Cookie', userTokenCookie);
+                             .set('Cookie', user2TokenCookie);
       expect(response.status).toEqual(400);
       expect(response.body).toEqual({
         error: {
@@ -276,7 +276,7 @@ describe('posts routes', () => {
     it('Returns updated post on success for same user', async () => {
       const response = await request(app)
                              .patch(`/posts/${post2.id}`)
-                             .set('Cookie', userTokenCookie)
+                             .set('Cookie', user2TokenCookie)
                              .send(updatePostBody);
       expect(response.status).toEqual(200);
       expect(response.body).toEqual({
@@ -397,7 +397,7 @@ describe('posts routes', () => {
     it('Returns message on success for the poster', async () => {
       const response = await request(app)
                              .delete(`/posts/${post2.id}`)
-                             .set('Cookie', userTokenCookie);
+                             .set('Cookie', user2TokenCookie);
       expect(response.status).toEqual(200);
       expect(response.body).toEqual({
         message: `Deleted post ${post2.id}.`

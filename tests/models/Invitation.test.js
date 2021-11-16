@@ -34,8 +34,13 @@ describe('Invitation model', () => {
       expect(invitations).toEqual([invitation2]);
     });
 
+    it('Returns all invitations for passed club ID', async () => {
+      const invitations = await Invitation.getAll(undefined, club1.id);
+      expect(invitations).toEqual([invitation1]);
+    });
+
     it('Returns empty array when no matching username found', async () => {
-      const invitations = await Invitation.getAll('abc');
+      const invitations = await Invitation.getAll('abc', club1.id);
       expect(invitations).toEqual([]);
     });
   });
