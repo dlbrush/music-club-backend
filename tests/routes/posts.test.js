@@ -1,4 +1,3 @@
-const { post } = require('superagent');
 const request = require('supertest');
 
 const app = require('../../app');

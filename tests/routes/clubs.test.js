@@ -34,6 +34,10 @@ describe('clubs routes', () => {
     await clearDb();
   });
 
+  afterAll(async () => {
+    await db.end();
+  });
+
   describe('GET /', () => {
     it('Returns all clubs for admin when no query string passed', async () => {
       const response = await request(app)
@@ -671,9 +675,5 @@ describe('clubs routes', () => {
         }
       });
     });
-  });
-
-  afterAll(async () => {
-    await db.end();
   });
 })

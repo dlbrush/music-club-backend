@@ -1,10 +1,9 @@
 const express = require('express');
 
-const Club = require('../models/Club');
 const Invitation = require('../models/Invitation');
 const User = require('../models/User');
 const MembershipService = require('../services/MembershipService');
-const { NotFoundError, UnauthorizedError, BadRequestError } = require('../helpers/errors');
+const { NotFoundError, BadRequestError } = require('../helpers/errors');
 const { ensureLoggedIn, ensureAdminOrValidClub } = require('../middleware/auth');
 
 const router = new express.Router();
