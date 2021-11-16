@@ -36,6 +36,9 @@ class User {
   }
 
   static async getSome(usernames) {
+    // Return empty array if no usernames passed, otherwise all usernames will be returned
+    if (!usernames.length) return [];
+
     const paramList = createParamList(usernames, 'username');
 
     const result = await db.query(`

@@ -45,7 +45,7 @@ class MembershipService {
     const newUserClub = await UserClub.create(founder.username, club.id);
     // Set club.members to an array including the founder
     club.members = [founder];
-    return `Founder ${founder.username} has successfully joined club ${club.name} (ID: ${club.clubId})`;
+    return `Founder ${founder.username} has successfully joined club ${club.name} (ID: ${club.id})`;
   }
 
   static async getClubMembers(clubId) {
