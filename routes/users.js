@@ -81,7 +81,7 @@ router.post('/', ensureLoggedIn, ensureAdmin, async function (req, res, next) {
  * POST /:username/join-club/:clubId
  * Allows the user to attempt to join a club
  */
-router.post('/:username/join-club/:clubId', ensureLoggedIn,  ensureAdminOrSameUser, async function (req, res, next) {
+router.post('/:username/join-club/:clubId', ensureLoggedIn, ensureAdminOrSameUser, async function (req, res, next) {
   try {
     // First, make sure passed club ID is an integer
     const clubId = parseInt(req.params.clubId);

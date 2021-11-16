@@ -18,8 +18,8 @@ async function seedDB () {
     const user1 = user1Data.newUser;
     const user2 = user2Data.newUser;
   
-    const club1 = await Club.create('testClub1', 'testing club 1', 'test1', true);
-    const club2 = await Club.create('testClub2', 'testing club 2', 'test2', false);
+    const club1 = await Club.create('testClub1', 'testing club 1', user1, true);
+    const club2 = await Club.create('testClub2', 'testing club 2', user2, false);
   
     // Make sure to make users members of their clubs
     const userClub1 = await UserClub.create('test1', club1.id);

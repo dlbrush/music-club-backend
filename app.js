@@ -26,7 +26,9 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser());
-app.use(morgan('tiny'));
+if(process.env.NODE_ENV !== 'test') {
+  app.use(morgan('tiny'));
+}
 
 // Authentication
 app.use(authenticateToken);
