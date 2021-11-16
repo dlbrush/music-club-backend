@@ -126,6 +126,7 @@ async function createTestObjects() {
   const userClub1 = await UserClub.create('test1', club1.id);
   const userClub2 = await UserClub.create('test2', club2.id);
   const album1 = await Album.create(33170, 1884, 'Green Day', 'Dookie', 'https://img.discogs.com/_aD_ZCgjICJ9ilW_hdav_yk1tSo=/fit-in/600x600/filters:strip_icc():format(jpeg):mode_rgb():quality(90)/discogs-images/R-2103788-1507814667-9558.jpeg.jpg');
+  const albumGenre1 = await AlbumGenre.create(album1.discogsId, 'Rock');
   const post1 = await Post.create(club1.id, album1.discogsId, user1.username, 'Test Track', 'Check this out');
   const post2 = await Post.create(club2.id, album1.discogsId, user2.username, 'Test Track', 'Check this out');
   const vote1 = await Vote.create(post2.id, user2.username, true);
@@ -146,7 +147,8 @@ async function createTestObjects() {
     vote1,
     comment1,
     invitation1,
-    invitation2
+    invitation2,
+    albumGenre1
   }
 }
 
@@ -168,5 +170,5 @@ module.exports = {
   clearDb,
   adminTokenCookie,
   user2TokenCookie,
-  user3TokenCookie
+  user3TokenCookie,
 }

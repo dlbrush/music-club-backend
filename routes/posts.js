@@ -150,7 +150,7 @@ router.post('/:postId/vote/:type', ensureLoggedIn, async function(req, res, next
   }
 });
 
-router.post('/:postId/new-comment', ensureLoggedIn, checkPost, ensureAdminOrValidClub('post', 'clubId', {}), ensureLoggedIn, async function(req, res, next) {
+router.post('/:postId/new-comment', ensureLoggedIn, checkPost, ensureAdminOrValidClub('post', 'clubId', {}), async function(req, res, next) {
   try {
     // Make new comment
     const newComment = await Comment.create(req.user.username, req.body.comment, req.post.id);
