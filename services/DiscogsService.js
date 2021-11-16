@@ -23,7 +23,6 @@ class DiscogsService {
 
       // Pull relevant data from JSON response
       const albumData = response.data;
-      console.log(albumData);
       const { title, year, artists, genres, images } = albumData;
       const primaryImgObject = images.find(img => img.type === 'primary') || images[0];
       const primaryImgUrl = primaryImgObject.uri;
