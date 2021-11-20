@@ -8,6 +8,12 @@ const { AUTH_DURATION } = require('../config');
 
 const router = express.Router();
 
+/**
+ * Register a new account.
+ * Expects body { username, password, email }
+ * Optionally accepts profileImgUrl property
+ * Attaches cookie on response so that further requests are authenticated on success
+ */
 router.post('/register', async function (req, res, next) {
   try {
     validateRequest(req.body, newUserSchema);
@@ -36,6 +42,11 @@ router.post('/register', async function (req, res, next) {
   }
 });
 
+/**
+ * Login to existing account
+ * Expects body { username, password }
+ * Attaches cookie on response so that further requests are authenticated on success
+ */
 router.post('/login', async function (req, res, next) {
   try {
     const { username, password } = req.body;
@@ -71,6 +82,7 @@ router.post('/check', async function (req, res, next) {
   }
 });
 
+// Remove the token cookie from the user's requests. Further requests after this will no longer authenticate until you log back in or register
 router.post('/logout', async function (req, res, next) {
   try {
     res.clearCookie('token', {maxAge: AUTH_DURATION, httpOnly: true});

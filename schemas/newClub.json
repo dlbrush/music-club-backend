@@ -24,7 +24,7 @@
       "bannerImgUrl": {
           "type": "string",
           "description": "URL to access the club's banner image at. Should be jpg, png, or gif, and accessible via http.",
-          "pattern": "^https*://.+/.+(.jpg|.jpeg|.png|.gif)"
+          "pattern": "^https*://"
       },
       "isPublic": {
           "type": "boolean",

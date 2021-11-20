@@ -19,6 +19,11 @@ const router = new express.Router();
 
 // No post route needed here (for now) because posts are made to a club in club route. Maybe an admin route in the future
 
+/**
+ * Get all posts, or just posts for a given club
+ * Only admin can view all posts, but a user in a club can view all posts to that club
+ * Expects query string clubId to get posts in a given club
+ */
 router.get('/', ensureLoggedIn, ensureAdminOrValidClub('query', 'clubId', {allowPublic: true, adminSkipValidation: true}), async function(req, res, next) {
   try {
     const clubId = req.query['clubId'];
@@ -39,6 +44,12 @@ router.get('/', ensureLoggedIn, ensureAdminOrValidClub('query', 'clubId', {allow
   }
 });
 
+/**
+ * Get details for a single post.
+ * User must be admin or a member of the club where the post was made.
+ * Posts in public clubs are accessible by any user.
+ * Adds comment and album data for the post from the database.
+ */
 router.get('/:postId', ensureLoggedIn, checkPost, ensureAdminOrValidClub('post', 'clubId', {allowPublic: true}), async function(req, res, next) {
   try {
     // Add comments, and add user data for each comment
@@ -70,6 +81,7 @@ router.get('/:postId', ensureLoggedIn, checkPost, ensureAdminOrValidClub('post',
 
 /**
  * Deliver posts for all clubs the given user is a part of
+ * User must be admin or the user with the username in the route
  */
 router.get('/recent/:username', ensureLoggedIn, ensureAdminOrSameUser, async function(req, res, next) {
   try {
@@ -151,6 +163,13 @@ router.post('/:postId/vote/:type', ensureAdmin, async function(req, res, next) {
   }
 });
 
+/**
+ * Add a comment for a given post.
+ * The comment will be associated with the user accessing the route.
+ * User info is attached to the comment so that the user's username and profile image will appear with the comment on the front end.
+ * Expects body { comment }
+ * User must be admin or member of the club where the post was made
+ */
 router.post('/:postId/new-comment', ensureLoggedIn, checkPost, ensureAdminOrValidClub('post', 'clubId', {}), async function(req, res, next) {
   try {
     // Make new comment
@@ -167,6 +186,12 @@ router.post('/:postId/new-comment', ensureLoggedIn, checkPost, ensureAdminOrVali
   }
 });
 
+/**
+ * Update post data.
+ * User must be admin or the user who created the post in order to access this route.
+ * Expects body { content, recTracks }
+ * Both properties are optional, and any property not passed will not be updated.
+ */
 router.patch('/:postId', ensureLoggedIn, ensureAdminOrPoster, async function(req, res, next) {
   try {
     const post = req.post;
@@ -181,6 +206,10 @@ router.patch('/:postId', ensureLoggedIn, ensureAdminOrPoster, async function(req
   }
 });
 
+/**
+ * Delete a post.
+ * User must be admin or the creator of a post in order to access this route.
+ */
 router.delete('/:postId', ensureLoggedIn, ensureAdminOrPoster, async function(req, res, next) {
   try {
     const message = await req.post.delete();

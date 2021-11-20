@@ -18,6 +18,11 @@ const { ensureLoggedIn, ensureAdminOrValidClub } = require('../middleware/auth')
 
 const router = new express.Router();
 
+/**
+ * Get all clubs or only public clubs.
+ * Users who are not admins can only access public clubs.
+ * Expects query string properties isPublic, which can be set to true or false only, or name, which can be any string.
+ */
 router.get('/', ensureLoggedIn, async function(req, res, next) {
   try {
     // Convert isPublic query string to boolean if it matches boolean string
@@ -44,6 +49,10 @@ router.get('/', ensureLoggedIn, async function(req, res, next) {
   }
 });
 
+/**
+ * Get details of a single club based on passed club ID.
+ * User must be admin, a member of the club, or getting info about a public club.
+ */
 router.get('/:clubId', ensureLoggedIn, ensureAdminOrValidClub('params', 'clubId', {allowPublic: true}), async function(req, res, next) {
   try {
     // Club will already be attached to req object from ensureAdminOrValidClub
@@ -59,7 +68,10 @@ router.get('/:clubId', ensureLoggedIn, ensureAdminOrValidClub('params', 'clubId'
   }
 });
 
-// Get all invitations to a given club
+/**
+ * Get all invitations associated with the club ID in the route.
+ * User must be admin, a member of the club, or getting info about a public club.
+ */
 router.get('/:clubId/invitations', ensureLoggedIn, ensureAdminOrValidClub('params', 'clubId', {allowPublic: true}), async function(req, res, next) {
   try {
     // Get invited users based on Invitation records
@@ -71,7 +83,11 @@ router.get('/:clubId/invitations', ensureLoggedIn, ensureAdminOrValidClub('param
   }
 });
 
-
+/**
+ * Create a new club.
+ * Expects body { name, description, isPublic }
+ * Accepts optional property bannerImgUrl to set the banner image for the club
+ */
 router.post('/', ensureLoggedIn, async function(req, res, next) {
   try {
     // Convert body.isPublic to boolean if possible
@@ -103,6 +119,11 @@ router.post('/', ensureLoggedIn, async function(req, res, next) {
   }
 });
 
+/**
+ * Create a new post for the club with the ID in the route
+ * Expects body { content, discogsId, recTracks }
+ * Discogs ID must be associated with a Master Release in the Discogs database
+ */
 router.post('/:clubId/new-post', ensureLoggedIn, ensureAdminOrValidClub('params', 'clubId', {}), async function(req, res, next) {
   try {
     // Try to convert discogs ID to integer
@@ -126,6 +147,12 @@ router.post('/:clubId/new-post', ensureLoggedIn, ensureAdminOrValidClub('params'
   }
 });
 
+/**
+ * Update club data in the database.
+ * Expects body { content, recTracks }
+ * Both properties are optional, nothing will be updated for a property that is not passed.
+ * Must be admin or the founder of the club to access this route.
+ */
 router.patch('/:clubId', ensureAdminOrValidClub('params', 'clubId', {founderOnly: true}), async function (req, res, next) {
   try {
     // Validate request body
@@ -147,6 +174,10 @@ router.patch('/:clubId', ensureAdminOrValidClub('params', 'clubId', {founderOnly
   }
 });
 
+/**
+ * Deletes a club from the database.
+ * Must be admin or the founder of the club to access this route.
+ */
 router.delete('/:clubId', ensureAdminOrValidClub('params', 'clubId', {founderOnly: true}), async function (req, res, next) {
   try {
     const message = await req.club.delete();

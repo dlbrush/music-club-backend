@@ -13,6 +13,10 @@ const updateUserSchema = require('../schemas/updateUser.json');
 
 const router = new express.Router();
 
+/**
+ * Get a list of all users.
+ * Optionally pass query string "username" in order to return all users who have usernames matching the passed string.
+ */
 router.get('/', ensureLoggedIn, async function (req, res, next) {
   try {
     const users = await User.getAll(req.query['username']);
@@ -22,6 +26,11 @@ router.get('/', ensureLoggedIn, async function (req, res, next) {
   }
 });
 
+/**
+ * Get details on a user.
+ * User accessing this route must be admin or the user specified in the route.
+ * Attaches all clubs the user is a part of and all invitations the user has received. This is done for ease of access from the front end.
+ */
 router.get('/:username', ensureLoggedIn, ensureAdminOrSameUser, async function (req, res, next) {
   try {
     const user = await User.get(req.params.username);
@@ -56,6 +65,12 @@ router.get('/:username', ensureLoggedIn, ensureAdminOrSameUser, async function (
   }
 });
 
+/**
+ * Create a new user.
+ * This route is only accessible by an admin user, as it is the only way to create other admin users.
+ * Expects body { username, password, email, admin }
+ * Optionally pass profileImgUrl property to set the URL for the user's profile image. URL must be valid.
+ */
 router.post('/', ensureLoggedIn, ensureAdmin, async function (req, res, next) {
   try {
     // Validate request
@@ -78,8 +93,10 @@ router.post('/', ensureLoggedIn, ensureAdmin, async function (req, res, next) {
 });
 
 /**
- * POST /:username/join-club/:clubId
  * Allows the user to attempt to join a club
+ * No body required but username and clubId in route must be valid.
+ * User accessing this route must be admin or the user with the username in the route.
+ * Deletes any invitations to the club that were sent to the user, as those invitations are now irrelevant.
  */
 router.post('/:username/join-club/:clubId', ensureLoggedIn, ensureAdminOrSameUser, async function (req, res, next) {
   try {
@@ -105,6 +122,13 @@ router.post('/:username/join-club/:clubId', ensureLoggedIn, ensureAdminOrSameUse
   }
 });
 
+/**
+ * Update user data.
+ * User must be admin or the user specified in the route in order to access this route.
+ * Expects body { email, profileImgUrl }
+ * Any property not passed will not be updated
+ * No other properties are allowed to be passed.
+ */
 router.patch('/:username', ensureLoggedIn, ensureAdminOrSameUser, async function (req, res, next) {
   try {
     const user = await User.get(req.params.username);
@@ -127,6 +151,10 @@ router.patch('/:username', ensureLoggedIn, ensureAdminOrSameUser, async function
   }
 });
 
+/**
+ * Delete the user specified in the route from the database.
+ * Must be admin or the user in the route to access this.
+ */
 router.delete('/:username', ensureLoggedIn, ensureAdminOrSameUser, async function (req, res, next) {
   try {
     const user = await User.get(req.params.username);

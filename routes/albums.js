@@ -8,6 +8,7 @@ const router = new express.Router();
 /**
  * Route that makes a search request to the Discogs database. 
  * This needs to be done from the backend since the Discogs search requires user authentication
+ * Expects query string keys title and artist
  */
 router.get('/search', ensureLoggedIn, async function(req, res, next) {
   try {

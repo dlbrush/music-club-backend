@@ -8,6 +8,12 @@ const { ensureLoggedIn, ensureAdminOrValidClub } = require('../middleware/auth')
 
 const router = new express.Router();
 
+/**
+ * Creates a new invitation from the user accessing this route.
+ * User must be a member of the club specified in the body, or an admin
+ * Cannot create an invitation for a member of the club or a user already invited.
+ * Expects body { clubId, username }
+ */
 router.post('/', ensureLoggedIn, ensureAdminOrValidClub('body', 'clubId', {}), async function(req, res, next) {
   try {
     const club = req.club;
