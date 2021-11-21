@@ -348,7 +348,7 @@ describe('clubs routes', () => {
     });
 
     it('Returns error if bannerImgUrl does not match expected pattern', async () => {
-      testCreateBody.bannerImgUrl = 'https://www.djh.jpg';
+      testCreateBody.bannerImgUrl = 'abc.jpeg';
       const response = await request(app)
                               .post('/clubs')
                               .set('Cookie', adminTokenCookie)
@@ -572,7 +572,7 @@ describe('clubs routes', () => {
     });
 
     it('Returns error if bannerImgUrl does not match expected pattern', async () => {
-      updateClubBody.bannerImgUrl = 'https://www.djh.jpg';
+      updateClubBody.bannerImgUrl = 'abc.jpeg';
       const response = await request(app)
                               .patch(`/clubs/${club1.id}`)
                               .set('Cookie', adminTokenCookie)
