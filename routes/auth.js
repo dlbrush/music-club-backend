@@ -8,6 +8,13 @@ const { AUTH_DURATION } = require('../config');
 
 const router = express.Router();
 
+const cookieConfig = {
+  maxAge: AUTH_DURATION, 
+  httpOnly: true,
+  sameSite: 'None',
+  secure: true
+}
+
 /**
  * Register a new account.
  * Expects body { username, password, email }
@@ -30,7 +37,7 @@ router.post('/register', async function (req, res, next) {
     // Register user and receive JWT with username and admin status
     const { newUser, token } = await User.register(username, password, email, profileImgUrl);
 
-    res.cookie('token', token, {maxAge: AUTH_DURATION, httpOnly: true});
+    res.cookie('token', token, cookieConfig);
     return res.status(201).json({ 
       user: {
         username: newUser.username,
@@ -61,7 +68,7 @@ router.post('/login', async function (req, res, next) {
       throw new UnauthenticatedError(e.message);
     }
 
-    res.cookie('token', token, {maxAge: AUTH_DURATION, httpOnly: true});
+    res.cookie('token', token, cookieConfig);
     res.json({ 
       user: {
         username: user.username,
@@ -85,7 +92,7 @@ router.post('/check', async function (req, res, next) {
 // Remove the token cookie from the user's requests. Further requests after this will no longer authenticate until you log back in or register
 router.post('/logout', async function (req, res, next) {
   try {
-    res.clearCookie('token', {maxAge: AUTH_DURATION, httpOnly: true});
+    res.clearCookie('token', cookieConfig);
     res.json({ 
       message: 'Successfully logged out.'
     });

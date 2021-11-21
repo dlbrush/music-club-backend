@@ -35,7 +35,7 @@ app.use(authenticateToken);
 
 app.options('*', function (req, res, next) {
   res.set({
-    'Access-Control-Allow-Origin':  FRONTEND_URI,
+    'Access-Control-Allow-Origin': FRONTEND_URI,
     'Access-Control-Allow-Methods': 'POST, GET, PATCH, DELETE',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization'
   });
