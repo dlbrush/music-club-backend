@@ -4,6 +4,30 @@ An Express backend for the Music Club app.
 
 Frontend repo located here: [https://github.com/dlbrush/music-club-frontend](https://github.com/dlbrush/music-club-frontend)
 
+## Table of contents
+
+- [Music Club (Backend)](#music-club-backend)
+  - [Table of contents](#table-of-contents)
+  - [Summary](#summary)
+  - [Technologies used](#technologies-used)
+  - [Starting the app locally](#starting-the-app-locally)
+    - [Prerequisites](#prerequisites)
+    - [Configuring environment variables](#configuring-environment-variables)
+    - [Running the app](#running-the-app)
+  - [Database](#database)
+    - [Seeding the DB](#seeding-the-db)
+  - [Feature Walkthrough](#feature-walkthrough)
+    - [Quickstart guide (Standard user flow)](#quickstart-guide-standard-user-flow)
+    - [Authentication](#authentication)
+    - [Clubs](#clubs)
+    - [Invitations](#invitations)
+    - [Posts](#posts)
+    - [Comments](#comments)
+  - [Testing](#testing)
+    - [Backend Tests](#backend-tests)
+    - [Frontend Tests](#frontend-tests)
+  - [API](#api)
+
 ## Summary
 
 The Music Club app creates a network of users who post and discuss music in "clubs". A Music Club is intended to be like a book club - post an album for others to listen to, and post comments to discuss it afterwards. Users who sign up for the site can join clubs or start their own and invite their friends. Then, they can search for albums using the Discogs database, and share those albums with their thoughts in any club they're a member of.
@@ -15,10 +39,12 @@ The Music Club is intended to be a platform for sharing, discovering, and discus
 **Backend**
 1. PostgresQL database
 2. NodeJS backend running an Express server
+3. PG for communication between the server and the database
 
 **Frontend**
 1. React (via Create-React-App)
-2. Bootstrap for styling and responsive design
+2. React Router
+3. Bootstrap for styling and responsive design
 ## Starting the app locally
 
 ### Prerequisites
@@ -28,7 +54,8 @@ Make sure the following software is installed on your machine before trying to r
 1. [PostgresQL](https://www.postgresql.org/)
 2. [Node.js](https://nodejs.org/)
 
-Also, make sure you have cloned both the [backend]() and [frontend]() repos.
+Also, make sure you have cloned both the [backend](https://github.com/dlbrush/music-club-backend) and [frontend](https://github.com/dlbrush/music-club-frontend) repos. Once you have both repos on your machine, make sure to run `npm i` from the root directory of both in order to install all npm dependencies.
+
 
 ### Configuring environment variables
 
@@ -62,6 +89,8 @@ The database is built on [PostgresQL](https://www.postgresql.org/), and accessed
 
 The frontend accesses the DB entirely by making API calls to the backend. All API calls are made by the API class defined by **api.js** in the frontend root directory.
 
+Database tables are represented by Models in the backend, in the `models` directory. These models have methods to perform basic database operations using [node-postgres](https://www.npmjs.com/package/pg), and return objects with defined properties that can be manipulated and used within the context of the backend for easy access to data.
+
 ### Seeding the DB
 
 1. Start PostgresQL on your machine.
@@ -69,10 +98,25 @@ The frontend accesses the DB entirely by making API calls to the backend. All AP
 3. Then run `npm run seed-db` to seed the database. This will give you a test user and a test club to explore.
 
 Test user:
-Username: 'test1'
-Password: 'test1'
+
+**Username:** 'test1'
+
+**Password:** 'test1'
 
 ## Feature Walkthrough
+
+### Quickstart guide (Standard user flow)
+
+- Register for an account, or log in with your existing account! Having an account allows you to join clubs and make posts.
+- Check out the list of public clubs, which can be found in the navigation bar. Click on a club name.
+- When you open a club, you'll see a list of posts. Click on a post to see more details.
+- Click "Members" in the navigation bar at the top of a club page to see the list of members.
+- Now that you've seen some clubs, find one you'd like to join and click the "Join Club" button. Or, if none of the clubs suit your fancy, maybe it's time to start your own club - if you want to do that, click on "New Club" in the navigation bar, and add a name and description for your club. Add a link to the image you'd like for your banner - or wait for later, since that's optional. Make it a private club for you and your friends, or a public club for the world to see - totally up to you!
+- Now that you're a club member, you can add your own posts. Click "My clubs" in the navigation bar to find the club you just joined. Click on it to open it. You should now have a "New Post" button to click in the nav bar.
+- First, you'll need to find an album to recommend. Search by title or artist name. You'll see results from the <a href="www.discogs.com">Discogs</a> album database.
+- Once you've chosen an album, click "Next" to move on to filling out the details of your post. Say something about the album and list out the tracks on the album that you recommend. You can write anything in these fields. Click "Post" to add your post.
+- Your post is now at the top of the club for everyone to see! Other users in the club can comment on your post - maybe it's time to invite some of your friends to the club to talk about it, using the "Invite Users" button?
+- And that's it! Welcome to the club - check in every day to see new posts or talk about what you're listening to.
 
 ### Authentication
 
@@ -171,9 +215,23 @@ Users can make posts in any club they are a member of. Posts contain `content`, 
   * You should be taken back to the list of posts for this club, and your post should be at the top!
 
 
+### Comments
+
+Comments are the best way to interact with the posts made by other users in a club! Share your thoughts on a recommended album by commenting on it.
+
+**Backend**
+* Comments are attached as objects in their own array to the results of a GET request to `/posts/:postId` showing the details of a post. Comments have their own database model and table in the DB, but there is not currently an API endpoint that returns comments on their own.
+* To add a comment, send a POST request to `/posts/:postId/new-comment`. This route only requires a body with string property `comment` containing the contents of the comment. It is associated with a post via the ID in the parameter, and associated with the user making the request. To make a comment on a post, you must be an admin user or a member of the club where the post was made.
+* If you are the user who made a comment, you can edit or delete the comment by making a PATCH or DELETE request to `/comments/:commentId` and passing the ID of the comment. The only property that you can edit on a PATCH request is the `comment` contents.
+
+**Frontend**
+* Comments are shown underneath any given post detail page, located at `/clubs/:clubId/posts/:postId`. Comments can only be seen by members of a club, not by visitors to a public club. Comments are displayed from oldest to newest, top to bottom.
+* If you are a member of a club, you can easily add a comment to a post using the text field underneath any post. Your comment will instantly appear underneath the post if it is made successfully.
+
+
 ## Testing
 
-Testing on both the front and back end is handled by [Jest](https://jestjs.io/).
+Testing on both the front and back end is handled by [Jest](https://jestjs.io/). Jest is a dependency of both repos, so you don't need to install jest yourself to run tests for this app.
 
 ### Backend Tests
 * Run tests on the backend by running `npm test` from the root directory. This runs `jest -i`, which runs tests one by one, allowing ascynchronous actions to resolve before moving to the next test.
