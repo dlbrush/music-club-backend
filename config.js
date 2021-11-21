@@ -1,7 +1,7 @@
 require('dotenv').config();
 
 // Server config
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 const FRONTEND_URI = process.env.FRONTEND_URI;
 
 // Authentication
