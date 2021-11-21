@@ -4,6 +4,7 @@ An Express backend for the Music Club app.
 
 Frontend repo located here: [https://github.com/dlbrush/music-club-frontend](https://github.com/dlbrush/music-club-frontend)
 
+This backend is deployed to [https://music-club-backend.herokuapp.com/](https://music-club-backend.herokuapp.com/). The frontend is deployed to [https://music-club.surge.sh/](https://music-club.surge.sh/).
 ## Table of contents
 
 - [Music Club (Backend)](#music-club-backend)
