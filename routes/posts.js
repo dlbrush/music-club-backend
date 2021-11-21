@@ -1,6 +1,6 @@
 const express = require('express');
 
-const { NotFoundError, BadRequestError, UnauthorizedError } = require('../helpers/errors');
+const { NotFoundError, BadRequestError } = require('../helpers/errors');
 const Post = require('../models/Post');
 const Club = require('../models/Club');
 const Album = require('../models/Album');
@@ -8,7 +8,6 @@ const AlbumGenre = require('../models/AlbumGenre');
 const User = require('../models/User');
 const UserClub = require('../models/UserClub');
 const Comment = require('../models/Comment');
-const MembershipService = require('../services/MembershipService');
 const VoteService = require('../services/VoteService');
 const { validateRequest } = require('../helpers/validation');
 const { ensureLoggedIn, ensureAdminOrValidClub, ensureAdminOrSameUser, ensureAdminOrPoster, ensureAdmin } = require('../middleware/auth');

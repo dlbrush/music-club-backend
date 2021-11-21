@@ -94,6 +94,83 @@ All features of the app require authentication besides logging in and out, regis
 * When registering, providing a profile image is optional. If no URL is provided, a default profile image is set for the user.
 * Users can log out at any time using the `Log Out` button and modal located in the `AppNav` component.
 
+### Clubs
+
+![Example club](/music-club/mc-backend/docs/images/exampleClub.png)
+
+Clubs are where the action happens in the app. This is where posts are made by users to recommend albums to other club members. Then, other club members can comment on them to discuss the albums.
+
+Clubs can be public or private. Public clubs are visible by all users and can be joined by anyone. Private clubs can only be joined by invitation.
+
+**Backend**
+* Clubs are created using the `/clubs` route with a POST request. Any logged-in user can create a club. Clubs must have a `name` and `description`. `isPublic` should be set to true for a public club and false for a private club. Optionally, pass a valid URL to add a banner image that will be displayed horizontally on the frontend.
+* Get data about a club by passing a valid club ID in a GET request to `/clubs/:clubId`.
+* Get an array of all clubs with a GET request to `/clubs`. Only an admin can see all clubs. Any user can see a list of all public clubs by passing a query string containing `isPublic=true`.
+* The founder of a club (or admin) can edit a club with a PATCH request to `/clubs/:clubId`, or delete the club with a DELETE request to the same route.
+* To join a club, send a POST request to `/users/:username/join-club/:clubId`. Username and club ID must be valid.
+
+
+**Frontend**
+* View all public clubs at `/public-clubs` or by navigating to `Public clubs` from the nav bar. This displays all public clubs in the backend database. Click any club to see a preview version, showing posts without comments and all members of the club.
+* View all of the clubs you are a member of by navigating to `/users/:username/clubs` with your own username as the parameter, or by clicking `My Clubs` in the nav bar. This loads club data about all clubs you are a member of from the backend. This is the only place to see the private clubs you are a member of.
+* As a logged-in user, navigate to `/new-club` or click `New club` in the nav bar to create a club. Including a banner image is not required, but is encouraged to make your club stand out! Make sure to leave the URL field blank if you want to use the default banner. When you submit, your new club will be added to the backend database.
+  * Be careful when choosing if you want to make a Public or Private club - you cannot change this after the club is created!
+* To view the posts and members of a club, go to `/clubs/:clubId` or click on the club from a list of public clubs or your own clubs. From here you can navigate around the club. Clubs have their own navigation bar underneath the name of the club. 
+  * Go to `clubs/:clubId/posts` to see all posts made in a club, or choose `Posts` from the navigation.
+  * Go to `clubs/:clubId/members` to see all members of a club, or choose `Members` from the navigation.
+  * You can also make new posts and invite users from this view if you are a member of the club - see the sections on posts and invitations for more information.
+* You can join a public club by clicking the "Join Club" button at the top of the club view.
+* If you are the founder of a club, you can edit the name, description, and banner of the club by navigating to the "Edit Club" button from the club view or going to `clubs/:clubId/edit-club`. You can also delete the club from this view.
+
+### Invitations
+
+Invitations are required to join private clubs. Invitations can be sent by any user who is a member of a club. Invitations can also be sent to join public clubs, but they are not required.
+
+**Backend**
+* To invite another user to a club you are a member of, send a POST request to `/invitations`. Request must contain a body with the `username` being invited and the `clubId` you're inviting them to. 
+* To see all invitations to a club, send a GET request to `/clubs/:clubId/invitations` with a valid club ID. You must be a member of the club or an admin.
+* To see invitations sent to you, send a GET request to `/users/:username/invitations`, using your own username as the parameter.
+
+**Frontend**
+* To invite another user to a club you are a member of: 
+  1. Open up the page for that club by navigating there through "My Clubs". Click "Invite Users" from the club's navigation bar.
+  2. Search for usernames to invite. The users listed will show "Member" next to their name if they are already a member, or "Invited" if they have already been invited.
+  3. Invite the user to the club by clicking "invite" next to their name. The next time they log in, they will have a badge next to their Invitations navigation item saying they have a new invitation.
+* Your own invitations can be accessed from the Nav Bar using the Invitations link. If you have new invitations, there should be a red badge next to the word "Invitations" indicating how many new invitations you have.
+
+### Posts
+
+![Example post](docs/images/examplePost.png)
+
+Posts are where the most important information for Music Club is shared: recommended albums! Users can post about any album as long as it's in the Discogs database, which is extensive and should contain the vast majority of music you want to share. 
+
+Users can make posts in any club they are a member of. Posts contain `content`, which is whatever the user wants to say about that album, and `recTracks`, the tracks a user would recommend on that album. Users can input anything in these fields but, they are encouraged to be used to guide the listening experience of other members and explain why the user is recommending the album.
+
+**Backend**
+* See all of the posts in a given club by sending a GET request to `/posts?clubId=<club ID>` and passing a valid Club ID. You must be a member of this club, or the club must be public, to access this route. Admins can view posts in any club or get an array of all posts across the entire app by sending the same request without a query string. The results here will contain basic information about the recommended albums as well.
+* Get details about a single post by sending a GET request to `posts/:postID` with a valid `postID` parameter. This route will include details about the album recommended, the genres of the album and any comments that have been made on the post.
+* Somewhat unintuitively, posts are created by being associated with a club, by sending a POST route to `/clubs/:clubId/new-post`. Some notes here about this:
+  * This route expects a body with properties `content`, `recTracks`, and `discogsId`. No properties are optional. There is no limit to the length of either `content` or `recTracks`, `discogsId` should be an integer.
+  * Coming from the frontend, `discogsId` is appended based on a search of the discogs Database, so it's pretty difficult to send an inaccurate request there. Coming from the backend, though, make sure to use the `/albums/search` route and use the `title` and `artist` query strings to find a Discogs ID of the album you want to post.
+  * When a valid Discogs ID is passed, there is a check to see if the album is already in the Music Club database. If there is not, the backend makes a request to the Discogs API to get data about the album and store it in the Music Club DB for easy access in the future. This creates a record (no pun intended) in the `albums` table of the DB, and creates `albums_genres` records for each genre that Discogs attaches to the album in their database.
+* A user can see a list of all of the posts in the clubs they are a member in, sorted by the most recent posted, by sending a GET request to `posts/recent/:username` and using their own username as a parameter. This is a great way to keep up with new posts to your clubs without needing to look at each club individually.
+* The user can edit or delete any post they made themselves by sending a PATCH or DELETE request to `/posts/:postId`, respectively. A PATCH request only accepts changes to the `content` and `recTracks` properties - you cannot update the album you recommended!
+
+**Frontend**
+* The quickest way to see new posts in the clubs you are a member of is the `Recent` button in the nav bar, which shows all posts in all of your clubs starting with the most recent. You can also navigate here at `/recent`. 
+* To see the posts in a club, click on a club and click on `Posts` in the club navigation bar, or go to `/clubs/:clubId/posts`. 
+* To see more details about a post, click on the card displaying the post either from the "Recent" or club view. you can also navigate directly at the route `/clubs/:clubId/posts/:postId` if you have the numbers for both. This view shows the genres associated with the recommended album in addition to the user's post content, recommended tracks, and the album's art, title, and artists.
+  * If you are a member of the club, you will also see the comments on a post and be able to add a comment at the bottom of this view. See more on comments in the next section.
+  * If you are the user who created the post, you should also see buttons that allow you to edit or delete the post. Clicking "Edit Post" will allow you to change the content and recommended tracks for the post, but not the album recommended. If you no longer recommend that album, just delete the post.
+* To create a new post:
+  * Navigate to a club you are a member of. You cannot post in clubs you are not a member of.
+  * Click "New Post" from the nav bar.
+  * First, find the album you are going to recommend. This uses the backend API to search for an album in the Discogs database. You can search by Title, Artist, or both.
+  * Once you've found the album you want to recommend, click it anywhere to set that to your chosen album. Click "Next" to move on to the next step.
+  * Finally, fill out the content of your post and your recommended tracks. You can leave either field blank if you'd like, but why would you? Click "Post" when you're ready to recommend your album.
+  * You should be taken back to the list of posts for this club, and your post should be at the top!
+
+
 ## Testing
 
 Testing on both the front and back end is handled by [Jest](https://jestjs.io/).
